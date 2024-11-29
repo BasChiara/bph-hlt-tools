@@ -44,6 +44,7 @@ def save_dict_to_root(dictionary, output_file, tree):
     uproot_file[tree] = uproot.newtree(dict_types)
     uproot_file[tree].extend(dictionary)
     uproot_file.close()
+    print(f'File {output_file} saved')
 
 
 def save_df_to_root(dataframe, output_file, tree):
@@ -71,6 +72,9 @@ my_parser.add_argument('--name',
                     type = str,
                     default='',
                     help='path of the input files')
+my_parser.add_argument('--dryrun',
+                    action='store_true',
+                    help='Print the commands without running them')
 
 args  = my_parser.parse_args()
 
@@ -78,16 +82,21 @@ print(args)
 
 tagPath=args.tagPath
 data_path=args.data_path + '*root'
-
 for indx, k in enumerate(data_path.split('/')):
+    print(k)
     if 'BPHTriggerTuples_' in k: break
 
 name = args.name
-#data_path="/eos/user/h/hcrottel/BPHTriggerTuples/Muon1/BPHTriggerTuples_Muon1-Run2023D-PromptReco-v2HLTStudy/*/*/*root"
-dataset=data_path.split('/')[indx-1].replace('*','')
-sample=data_path.split('/')[-2].replace('*','')
-year=data_path.split('/')[indx].split('-')[1]
-version=data_path.split('/')[indx].split('-')[-1]
+if args.dryrun:
+    dataset='ParkingDoubleMuonLowMass0'
+    sample=""
+    year="2024I"
+    version="v1" 
+else:
+    dataset=data_path.split('/')[indx-1].replace('*','')
+    sample=data_path.split('/')[-2].replace('*','')
+    year=data_path.split('/')[indx].split('-')[1]
+    version=data_path.split('/')[indx].split('-')[-1]
 data_name=f'{name+"_" if name else ""}{dataset}_{year}_{version}_{tagPath}{"_"+sample if sample else ""}'
 print(data_name)
 
@@ -96,12 +105,11 @@ bad_files = []
 #files = glob.glob('/eos/user/h/hcrottel/BPHTriggerTuples/Muon*/BPHTriggerTuples_Muon*-Run2023D-PromptReco-v2HLTStudy/*/0000/*root')
 files = glob.glob(data_path)
 print('Total files: ', len(files))
-output_file = f'/eos/user/h/hcrottel/TriggerContact/HLTEfficiency1/Data/{data_name}.root'
-main_path = f'/eos/cms/store/group/phys_bphys/trigger/{year[:-1]}/TagTuples/parts/'
+output_file = f'/eos/user/c/cbasile/BPH_trigger/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/Efficiency/{data_name}.root'
+main_path = f'/eos/user/c/cbasile/BPH_trigger/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/Efficiency/'
 os.makedirs(main_path, exist_ok=True)
 output_file = f'{main_path}{data_name}.root'
 time.sleep(5)
-
 
 dataTag = list()
 for indx, fn in enumerate(files):
@@ -118,28 +126,27 @@ for indx, fn in enumerate(files):
     file = uproot.open(fn)
     data = file['rootuple']['ntuple'].arrays(outputtype=pd.DataFrame)
     file.close()
-
-    muonFiringTag = data.filter(regex=f'mu.*{tagPath}').sum(axis=1)>0
     
+    print('[+] data Loaded')
+    muonFiringTag = data.filter(regex=f'mu.*{tagPath}').sum(axis=1)>0 # mask : at least one muon fired the tagHLT
     dataTag_ = data[muonFiringTag]
-    data = pd.DataFrame()
     #dataTag_.set_index('event', inplace=True)
 
+    # rename 'mu1' -> muTag, 'mu2' -> muProbe 
     dataTag_leadingTag  = dataTag_[dataTag_[f'mu1_{tagPath}']==1]
     dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu1', 'muTag'), axis=1, inplace=True)
     dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu2', 'muProbe'), axis=1, inplace=True)
     dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon1', 'muTag'), axis=1, inplace=True)
-    dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon2', 'muProbe'), axis=1, inplace=True)    
-
-
+    dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon2', 'muProbe'), axis=1, inplace=True)
+    # rename 'mu1' -> muTag, 'mu2' -> muProbe
     dataTag_trailingTag = dataTag_[dataTag_[f'mu2_{tagPath}']==1]
     dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu2', 'muTag'), axis=1, inplace=True)
     dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu1', 'muProbe'), axis=1, inplace=True)
     dataTag_trailingTag.rename(mapper=lambda x: x.replace('muon2', 'muTag'), axis=1, inplace=True)
     dataTag_trailingTag.rename(mapper=lambda x: x.replace('muon1', 'muProbe'), axis=1, inplace=True)    
 
+    # concatenate the two datasets
     _dataTag = pd.concat([dataTag_leadingTag, dataTag_trailingTag])
-    #_dataTag['lxySig'] = _dataTag['lxy']/_dataTag['lxyerr']
     
     dataTag.append(_dataTag)
 

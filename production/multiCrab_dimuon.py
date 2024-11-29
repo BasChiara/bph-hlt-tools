@@ -9,14 +9,11 @@ from optparse import OptionParser
 import CRABClient
 from CRABAPI.RawCommand import crabCommand
 from CRABClient.ClientExceptions import ClientException
-#from httplib import HTTPException #python2
 from http.client import HTTPException #python3
 #from CRABClient.UserUtilities import config
 
 
-_ProductionTag = '_First2024Check_April24_TEST'
-_ProductionTag = '_MuonJsonTest'
-_ProductionTag = "HLTStudy_v2"
+_ProductionTag = '_myTest'
 def getOptions():
     """
     Parse and return the arguments provided by the user.
@@ -72,18 +69,15 @@ def main():
         #--------------------------------------------------------
         from CRABClient.UserUtilities import config
         config = config()
-        
-        #jobname = 'Bsmumuphi_miniAOD_LowMass1_2023Cv0'
-        
+         
         config.General.requestName = None
-        #config.General.workArea = 'TriggerEfficiencies_Try2'
         config.General.workArea = 'BPHTriggerTuples'
         config.General.transferOutputs = True
         config.General.transferLogs = False
 
         config.JobType.pluginName = 'Analysis'
         config.JobType.psetName = '../test/mumuRootupler.py'
-	    #config.JobType.allowUndistributedCMSSW = True
+        config.JobType.allowUndistributedCMSSW = True
         
         config.Data.inputDataset = None
         config.Data.inputDBS = 'global'
@@ -94,113 +88,19 @@ def main():
         #config.Data.lumiMask = '/eos/user/c/cmsdqm/www/CAF/certification/Collisions24/DCSOnly_JSONS/dailyDCSOnlyJSON/Collisions24_13p6TeV_378981_380403_DCSOnly_TkPx.json'
         #config.Data.runRange = '379765-379769'
 
-        config.Data.outLFNDirBase = '/store/user/hcrottel/'+str(config.General.workArea)
-        #config.Data.outLFNDirBase = '/store/group/phys_bphys/trigger/Run2022/'#+str(config.General.workArea)
+        config.Data.outLFNDirBase = '/store/user/cbasile/'+str(config.General.workArea)
         config.Data.publication = False
         config.Data.outputDatasetTag = None
+        #config.Data.ignoreLocality = True
+
         config.Site.storageSite = 'T3_CH_CERNBOX'
         #config.Site.whitelist = ['T2_US*']
-        #config.Data.ignoreLocality = True
         #config.Site.storageSite = None # Choose your site.
         
         #--------------------------------------------------------
         # Will submit one task for each of these input datasets.
         inputDatasets = [
-            # "/Muon0/Run2023C-PromptReco-v1/MINIAOD",
-            # "/Muon1/Run2023C-PromptReco-v1/MINIAOD",
-
-            # "/Muon0/Run2023C-PromptReco-v2/MINIAOD",
-            # "/Muon1/Run2023C-PromptReco-v2/MINIAOD",
-
-            # "/Muon0/Run2023C-PromptReco-v3/MINIAOD",
-            # "/Muon1/Run2023C-PromptReco-v3/MINIAOD",
-
-            # "/Muon0/Run2023C-PromptReco-v4/MINIAOD",
-            # "/Muon1/Run2023C-PromptReco-v4/MINIAOD",
-
-            # "/Muon0/Run2023D-PromptReco-v1/MINIAOD",
-            # "/Muon1/Run2023D-PromptReco-v1/MINIAOD",
-
-            # "/Muon0/Run2023D-PromptReco-v2/MINIAOD",
-            # "/Muon1/Run2023D-PromptReco-v2/MINIAOD",
-
-            #"/Muon/Run2022F-PromptReco-v1/MINIAOD",
-
-            "/ParkingDoubleMuonLowMass0/Run2022F-PromptReco-v1/MINIAOD",            
-
-            #"/ParkingDoubleElectronLowMass/Run2023C-PromptReco-v1/MINIAOD",
-            #"/ParkingDoubleElectronLowMass/Run2023C-PromptReco-v2/MINIAOD",
-            #"/ParkingDoubleElectronLowMass/Run2023C-PromptReco-v3/MINIAOD",
-            #"/ParkingDoubleElectronLowMass/Run2023C-PromptReco-v4/MINIAOD",
-
-            #'/ParkingDoubleMuonLowMass0/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass1/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass2/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass3/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass4/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass5/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass6/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass7/Run2023C-PromptReco-v4/MINIAOD',
-
-            #'/ParkingDoubleMuonLowMass0/Run2023D-PromptReco-v1/MINIAOD',
-            #'/ParkingDoubleMuonLowMass2/Run2023D-PromptReco-v1/MINIAOD',
-            #'/ParkingDoubleMuonLowMass3/Run2023D-PromptReco-v1/MINIAOD',
-
-            # '/ParkingDoubleMuonLowMass0/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass1/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass2/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass3/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass4/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass5/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass6/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass6/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass0/Run2024C-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass1/Run2024C-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass2/Run2024C-PromptReco-v1/MINIAOD',
-            # '/ParkingDoubleMuonLowMass3/Run2024C-PromptReco-v1/MINIAOD',
-        
-
-            # '/ParkingSingleMuon0/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon1/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon2/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon3/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon4/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon5/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon6/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon7/Run2024B-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon0/Run2024C-PromptReco-v1/MINIAOD',
-            # '/ParkingSingleMuon1/Run2024C-PromptReco-v1/MINIAOD',
-
-            #"/Muon0/Run2024C-PromptReco-v1/MINIAOD",
-            #"/Muon1/Run2024C-PromptReco-v1/MINIAOD",
-
-            #"/Muon0/Run2024D-PromptReco-v1/MINIAOD",
-            #"/Muon1/Run2024D-PromptReco-v1/MINIAOD",
-
-            #"/Muon0/Run2024E-PromptReco-v1/MINIAOD",
-            #"/Muon1/Run2024E-PromptReco-v1/MINIAOD",
-
-
-            # "/BTagMu/Run2024C-PromptReco-v1/MINIAOD",
-            # "/DisplacedJet/Run2024C-PromptReco-v1/MINIAOD",
-            # "/EGamma0/Run2024C-PromptReco-v1/MINIAOD",
-            # "/JetMET0/Run2024C-PromptReco-v1/MINIAOD",
-            # "/Muon0/Run2024C-PromptReco-v1/MINIAOD",
-            # "/MuonEG/Run2024C-PromptReco-v1/MINIAOD",
-            # "/ParkingHH/Run2024C-PromptReco-v1/MINIAOD",
-            # "/ParkingLLP/Run2024C-PromptReco-v1/MINIAOD",
-            # "/ParkingVBF0/Run2024C-PromptReco-v1/MINIAOD",
-            # "/Tau/Run2024C-PromptReco-v1/MINIAOD",
-
-
-            # "/Muon0/Run2023D-PromptReco-v1/MINIAOD",
-            # "/Muon1/Run2023D-PromptReco-v1/MINIAOD",
-            # "/Muon0/Run2023D-PromptReco-v2/MINIAOD",
-            # "/Muon1/Run2023D-PromptReco-v2/MINIAOD",
-
-            #"/Muon/Run2022F-PromptReco-v1/MINIAOD",
-            #"/ParkingDoubleMuonLowMass0/Run2023D-PromptReco-v1/MINIAOD",
-            #"/ParkingDoubleMuonLowMass0/Run2023D-PromptReco-v2/MINIAOD",
+            '/ParkingDoubleMuonLowMass0/Run2024I-PromptReco-v1/MINIAOD',
         ]
         
         for inDS in inputDatasets:

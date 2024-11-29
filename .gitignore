@@ -1,0 +1,7 @@
+*__pycache__
+*.pyc
+*.root
+*.png
+*.pdf
+*.log
+production/BPHTriggerTuples/
