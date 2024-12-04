@@ -88,6 +88,11 @@ options.register('period', '2024I',
     VarParsing.varType.string,
     "Period of the data taking"
 )
+options.register('globalTag', 'NOTSET',
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.string,
+    "Set global tag"
+)
 
 options.parseArguments()
 
@@ -107,6 +112,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 # Global tag and input file
 GlobalTag_dict = {
+    '2024G' : '140X_dataRun3_Prompt_v4',
     '2024I' : '140X_dataRun3_Prompt_v4',
 }
 
@@ -124,7 +130,8 @@ mc_file_dict = {
 
 #from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, GlobalTag_dict[options.period])
+globalTag = options.globalTag if options._beenSet['globalTag'] else GlobalTag_dict[options.period]
+process.GlobalTag = GlobalTag(process.GlobalTag, globalTag, '')
 ## Message Logger and Event range
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000 
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )

@@ -35,8 +35,8 @@ def clopper_pearson(x, n, alpha=0.32, return_errors=True):
             hi = np.where((ratio==0) & (hi>0.5), 0, hi )
         to_return = np.array([lo, hi])
     else:
-        to_return = [0.0 if math.isnan(lo) else lo, 
-                    1.0 if math.isnan(hi) else hi]
+        to_return = [0.0 if np.isnan(lo) else lo, 
+                    1.0 if np.isnan(hi) else hi]
         if return_errors:
             to_return[0] = ratio - to_return[0]
             to_return[1] = to_return[1] -ratio
@@ -91,16 +91,22 @@ if __name__== '__main__':
 
     tagPath = 'HLT_Mu8_v'
     probePath = 'HLT_Mu0_L1DoubleMu_v'
-    input_file = '/eos/cms/store/group/phys_bphys/trigger/Run2024/TagTuples/Muon_Run2024C.root'
-    run  = '2024C'
-    Name = 'L1Efficiency_STEAM_May'
-
-    tagQuery = "2.9<DiMu_mass<3.3"\
-             +"& DiMu_Prob>0.005 "\
-             +"& abs(muTag_eta)<2.4 & abs(muProbe_eta)<2.4 "\
-             +"& muTag_pt>8 "\
-             +"& muTag_L1_match==1  & muProbe_L1_match==1 "\
-             +"& muTag_charge+muProbe_charge==0"\
+    input_file = '/eos/user/c/cbasile/BPH_trigger/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/Efficiency/prova_ParkingDoubleMuonLowMass0_2024I_v1_HLT_Mu8_v.root'
+    run  = '2024I'
+    Name = 'L1Efficiency_prova'
+    
+    tagQuery = ' & '.join([
+        "(2.9<DiMu_mass<3.3)",
+        "(DiMu_Prob>0.005)",
+        "(abs(muTag_eta)<2.4)",
+        "(abs(muProbe_eta)<2.4)",
+        "(muTag_pt>8)",
+        "(muTag_L1_match==1)",
+        "(muProbe_L1_match==1)",
+        "(muTag_charge+muProbe_charge==0)",
+        "(muTagGlobal==1)",
+        "(muTagloose==1)",
+    ])
 
 
 
@@ -122,6 +128,7 @@ if __name__== '__main__':
     arrays = ['DiMu_mass', 'DiMu_Prob', 'event', '*HLT_*' , 'mu*match', '*lxy*', '*charge*', 'L1*', '*dR*'] #+ ['DiMu_Prob']
     arrays+= 'muProbe_pt,muProbe_eta,muProbe_phi,muTag_pt,muTag_eta,muTag_phi'.split(',')
     arrays+= 'L3_muProbe_pt,L3_muProbe_eta,L3_muProbe_phi,L3_muTag_pt,L3_muTag_eta,L3_muTag_phi'.split(',')
+    arrays+= '*Global,*loose'.split(',')
 
 
 
@@ -139,20 +146,25 @@ if __name__== '__main__':
     else:
         efficiencyText = 'Efficiency'
 
-    for var1 in ['muProbe_pt', 'muProbe_eta', 'muProbe_phi', 'dR_muons','lxySig']:
-    
-    
-        h_all      = np.histogram(data.query(tagQuery)[var1], bins=Bins1d[var1])
-        h_passprob = np.histogram(data.query(tagQuery+f' and muProbe_{probePath}==1')[var1], 
-                                 bins=Bins1d[var1])        
-        ratio = h_passprob[0]/h_all[0]
-        err  = clopper_pearson(h_passprob[0], h_all[0])
+    vars = ['muProbe_pt', 'muProbe_eta', 'muProbe_phi', 'dR_muons','lxySig']
+    #vars = ['muProbe_pt']
+
+    for var1 in vars:
+        print(f' --- 1D efficiency VS {var1} ---')
+        h_all, bins  = np.histogram(data.query(tagQuery)[var1], bins=Bins1d[var1])
+        # substitute 1 with zeros
+        h_all = np.where(h_all==0, 1, h_all)
+        h_passprob,  bins = np.histogram(data.query(tagQuery+f' and muProbe_{probePath}==1')[var1], 
+                                 bins=Bins1d[var1])
+
+        ratio = h_passprob/h_all
+        err  = clopper_pearson(h_passprob, h_all)
 
         
         efficiency_output = dict(
-            Bins    = h_all[1],
-            Passing = h_passprob[0],
-            All     = h_all[0],
+            Bins    = bins.tolist(),
+            Passing = h_passprob,
+            All     = h_all,
             Ratio   = ratio,
             Error   = err,
             Probe   = probePath,
@@ -166,10 +178,8 @@ if __name__== '__main__':
             json.dump(efficiency_output, jj, indent=4, cls=npEncoder)
         
         
-        bin_mean = (h_all[1][1:] + h_all[1][:-1])/2
-        bin_size = (h_all[1][1:] - h_all[1][:-1])/2
-
-        
+        bin_mean = (bins[1:] + bins[:-1])/2
+        bin_size = (bins[1:] - bins[:-1])/2
         fig,ax = plt.subplots(figsize=[15,10])
         ax.errorbar(bin_mean, ratio, err, xerr=bin_size, ls='none', marker='o', capsize=2 )    
         ax.set_ylabel(efficiencyText)
@@ -181,8 +191,9 @@ if __name__== '__main__':
         plt.savefig(f'{outputdir}/Tag{tagPath}_Probe{probePath}_{var1}.pdf', bbox_inches='tight')
         plt.close()
 
-        for var2 in ['muProbe_pt', 'muProbe_eta', 'muProbe_phi', 'dR_muons','lxySig']:
+        for var2 in vars:
             if var2 == var1: continue
+            print(f' --- 2D efficiency {var1} VS {var2} ---')
 
             xedges = np.array(Bins1d[var1])
             yedges = np.array(Bins1d[var2])

@@ -93,27 +93,36 @@ def main():
         #config.Data.lumiMask = '/eos/user/c/cmsdqm/www/CAF/certification/Collisions24/DCSOnly_JSONS/dailyDCSOnlyJSON/Collisions24_13p6TeV_378981_380403_DCSOnly_TkPx.json'
         #config.Data.runRange = '379765-379769'
 
-        config.Data.outLFNDirBase = '/store/user/cbasile/'+str(config.General.workArea)
+        config.Data.outLFNDirBase = '/store/group/phys_bphys/cbasile/'+str(config.General.workArea)
         config.Data.publication = False
         config.Data.outputDatasetTag = None
         #config.Data.ignoreLocality = True
 
-        config.Site.storageSite = 'T3_CH_CERNBOX'
-        #config.Site.whitelist = ['T2_US*']
-        #config.Site.storageSite = None # Choose your site.
+        config.Site.storageSite = 'T2_CH_CERN'
+        #config.Site.storageSite = 'T3_CH_CERNBOX'
         
         #--------------------------------------------------------
         # get dataset from yaml file
-        inputDatasets = [
-            '/ParkingDoubleMuonLowMass0/Run2024I-PromptReco-v1/MINIAOD',
-        ]
-        
-        for inDS in inputDatasets:
+        with open(options.inputDataset, 'r') as stream:
+            try:
+                input_config = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+            
+        common  = input_config['common'] if 'common' in input_config else {}
+        samples = input_config['samples']
+
+        # GlobalTag
+        if 'globaltag' in common: config.JobType.pyCfgParams = ['globalTag='+common['globaltag']]
+
+        for dataset_name in samples:
+            inDS = samples[dataset_name]['dataset']
+            print(f'[+] processing {dataset_name} dataset : {inDS} ')
             # inDS is of the form /A/B/C. Since B is unique for each inDS, use this in the CRAB request name.
-            #config.General.requestName = inDS.split('/')[1]+'-'+inDS.split('/')[2]
-            config.General.requestName = inDS.split('/')[1]+'-'+inDS.split('/')[2] + _ProductionTag#
+            config.General.requestName = inDS.split('/')[1]+'-'+inDS.split('/')[2] + _ProductionTag
             config.Data.inputDataset = inDS
             config.Data.outputDatasetTag = '%s_%s' % (config.General.workArea, config.General.requestName)
+            print(config)
             # Submit.
             try:
                 print ( "Submitting for input dataset %s" % (inDS) )
