@@ -11,7 +11,8 @@ import os
 print('Imports')
 def create_dict_from_df_destructive(dataframe, destructive=True):
     dict_df = dict()
-    dataframe.reset_index(inplace=True)
+    #dataframe.reset_index(inplace=True)
+    dataframe = dataframe.reset_index()
     if 'Slice' in dataframe:
         for trg in set(dataframe.Slice):
             print(f'Slice_HLT_{trg}')
@@ -106,7 +107,7 @@ bad_files = []
 files = glob.glob(data_path)
 print('Total files: ', len(files))
 output_file = f'/eos/user/c/cbasile/BPH_trigger/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/Efficiency/{data_name}.root'
-main_path = f'/eos/user/c/cbasile/BPH_trigger/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/Efficiency/'
+main_path = f'/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_2024/'
 os.makedirs(main_path, exist_ok=True)
 output_file = f'{main_path}{data_name}.root'
 time.sleep(5)
@@ -129,17 +130,17 @@ for indx, fn in enumerate(files):
     
     print('[+] data Loaded')
     muonFiringTag = data.filter(regex=f'mu.*{tagPath}').sum(axis=1)>0 # mask : at least one muon fired the tagHLT
-    dataTag_ = data[muonFiringTag]
+    dataTag_ = data.loc[muonFiringTag]
     #dataTag_.set_index('event', inplace=True)
 
     # rename 'mu1' -> muTag, 'mu2' -> muProbe 
-    dataTag_leadingTag  = dataTag_[dataTag_[f'mu1_{tagPath}']==1]
+    dataTag_leadingTag  = (dataTag_.loc[dataTag_[f'mu1_{tagPath}']==1]).copy()
     dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu1', 'muTag'), axis=1, inplace=True)
     dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu2', 'muProbe'), axis=1, inplace=True)
     dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon1', 'muTag'), axis=1, inplace=True)
     dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon2', 'muProbe'), axis=1, inplace=True)
     # rename 'mu1' -> muTag, 'mu2' -> muProbe
-    dataTag_trailingTag = dataTag_[dataTag_[f'mu2_{tagPath}']==1]
+    dataTag_trailingTag = (dataTag_[dataTag_[f'mu2_{tagPath}']==1]).copy()
     dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu2', 'muTag'), axis=1, inplace=True)
     dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu1', 'muProbe'), axis=1, inplace=True)
     dataTag_trailingTag.rename(mapper=lambda x: x.replace('muon2', 'muTag'), axis=1, inplace=True)
@@ -151,7 +152,9 @@ for indx, fn in enumerate(files):
     dataTag.append(_dataTag)
 
 dataTag = pd.concat(dataTag)
-dataTag['lxySig'] = dataTag['lxy']/dataTag['lxyerr']
+lxySig = dataTag['lxy'] / dataTag['lxyerr']
+dataTag = pd.concat([dataTag, lxySig.rename('lxySig')], axis=1)
+#dataTag['lxySig'] = dataTag['lxy']/dataTag['lxyerr']
 save_df_to_root(dataTag, output_file, tagPath)
 
-print('Totak Bad Files: ', len(bad_files))
+print('Total Bad Files: ', len(bad_files))

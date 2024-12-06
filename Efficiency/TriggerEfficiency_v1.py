@@ -70,10 +70,7 @@ if __name__== '__main__':
     Name = args.output_file
 
     denQuery = args.denQ if args.denQ else cfg.default_tagQuery        
-    
-    if args.numQ=='none': numQuery = ''
-    else:                 numQuery = args.numQ
-
+    numQuery = args.numQ if args.numQ else cfg.default_probeQuery
 
     arrays = ['DiMu_mass', 'DiMu_Prob', 'event', '*HLT_*' , 'mu*match', '*lxy*', '*charge*', 'L1*', '*dR*'] #+ ['DiMu_Prob']
     arrays+= 'muProbe_pt,muProbe_eta,muProbe_phi,muTag_pt,muTag_eta,muTag_phi'.split(',')
@@ -93,6 +90,10 @@ if __name__== '__main__':
         efficiencyText = 'HLT Efficiency'
     else:
         efficiencyText = 'Efficiency'
+
+    print(f'{efficiencyText} : running on {input_file} with tag {tagPath} and probe {probePath}')
+    print(f' TAG query: {denQuery}')
+    print(f' PROBE query: {numQuery}')
 
     for var1 in cfg.variables:
         

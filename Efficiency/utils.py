@@ -57,7 +57,7 @@ def get_and_store(data, var, denQuery, numQuery, tagPath, probePath, Bins1d, inp
     ccomplete_numQuery = denQuery
     if numQuery:
         ccomplete_numQuery += " & "+numQuery 
-    ccomplete_numQuery+= f' and muProbe_{probePath}==1'
+    ccomplete_numQuery+= f' & muProbe_{probePath}==1'
     h_passprob = np.histogram(data.query(ccomplete_numQuery)[var], 
                                 bins=Bins1d[var])        
     ratio = h_passprob[0]/h_all[0]
