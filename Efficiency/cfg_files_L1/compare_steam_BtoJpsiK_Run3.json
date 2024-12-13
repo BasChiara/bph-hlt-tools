@@ -1,0 +1,18 @@
+{
+    "var" : "muProbe_eta",
+    "run" : "Run3",
+    "isMC" : true,
+    "output_label" : "BtoJpsiK_Run3",
+    "input_files"  : {
+        "2022"         : "Run3_STEAM_selection/SF_test_mc2022_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_eta.json",
+        "2022EE"       : "Run3_STEAM_selection/SF_test_mc2022EE_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_eta.json",
+        "2023"         : "Run3_STEAM_selection/SF_test_mc2023_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_eta.json",
+        "2023BPix"     : "Run3_STEAM_selection/SF_test_mc2023BPix_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_eta.json"
+    },
+    "legend_text" : {
+        "2022"         : "2022",
+        "2022EE"       : "2022EE",
+        "2023"         : "2023",
+        "2023BPix"     : "2023BPix"
+    }
+}

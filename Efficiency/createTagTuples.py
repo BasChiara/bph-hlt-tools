@@ -105,9 +105,10 @@ bad_files = []
 
 #files = glob.glob('/eos/user/h/hcrottel/BPHTriggerTuples/Muon*/BPHTriggerTuples_Muon*-Run2023D-PromptReco-v2HLTStudy/*/0000/*root')
 files = glob.glob(data_path)
+#if len(files) > 100: files = files[:100]
 print('Total files: ', len(files))
 output_file = f'/eos/user/c/cbasile/BPH_trigger/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/Efficiency/{data_name}.root'
-main_path = f'/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_2024/'
+main_path = f'/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_MC/'
 os.makedirs(main_path, exist_ok=True)
 output_file = f'{main_path}{data_name}.root'
 time.sleep(5)
@@ -119,7 +120,7 @@ for indx, fn in enumerate(files):
         ROOT.TFile(fn)
         print('\n')        
     except OSError:
-        bad_files.append(fn) 
+        bad_files.append(fn)
         print('Bad file')
         continue
     #if fn in bad_files: continue
@@ -154,7 +155,6 @@ for indx, fn in enumerate(files):
 dataTag = pd.concat(dataTag)
 lxySig = dataTag['lxy'] / dataTag['lxyerr']
 dataTag = pd.concat([dataTag, lxySig.rename('lxySig')], axis=1)
-#dataTag['lxySig'] = dataTag['lxy']/dataTag['lxyerr']
 save_df_to_root(dataTag, output_file, tagPath)
 
 print('Total Bad Files: ', len(bad_files))

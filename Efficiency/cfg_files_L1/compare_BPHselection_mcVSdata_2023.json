@@ -1,0 +1,16 @@
+{
+    "var" : "muProbe_pt",
+    "run" : "2023",
+    "isMC" : false,
+    "output_label" : "mcVSdata_2023",
+    "input_files"  : {
+        "2023_bph"      : "Run3_BPH_selection/SF_test_mc2023_Jpsito2Mu_pythia8/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2023BPix_bph"  : "Run3_BPH_selection/SF_test_mc2023BPix_Jpsito2Mu_pythia8/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2023_D_bph"    : "Run3_BPH_selection/SF_test_2023D/BPH_2023D_Efficiency1D_muProbe_pt.json"
+    },
+    "legend_text" : {
+        "2023_bph"      : "BPH 2023 JpsiTo2Mu",
+        "2023BPix_bph"  : "BPH 2023 BPix JpsiTo2Mu",
+        "2023_D_bph"    : "BPH 2023 D"
+    }
+}

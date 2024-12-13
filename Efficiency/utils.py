@@ -62,7 +62,7 @@ def get_and_store(data, var, denQuery, numQuery, tagPath, probePath, Bins1d, inp
                                 bins=Bins1d[var])        
     ratio = h_passprob[0]/h_all[0]
     err  = clopper_pearson(h_passprob[0], h_all[0])
-    
+
     efficiency_output = dict(
         Bins    = h_all[1],
         Passing = h_passprob[0],
@@ -77,7 +77,7 @@ def get_and_store(data, var, denQuery, numQuery, tagPath, probePath, Bins1d, inp
         input   = input_file
     )
     v_name = f'_v{v_name}' if v_name else ''
-    with open(f'{outputdir}/Efficiency1D_{var}{v_name}.json', 'w+') as jj:
+    with open(f'{outputdir}/Efficiency1D_Tag{tagPath}Probe{probePath}_{var}{v_name}.json', 'w+') as jj:
         json.dump(efficiency_output, jj, indent=4, cls=npEncoder)
     
     return h_all[1], ratio, err

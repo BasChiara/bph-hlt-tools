@@ -104,7 +104,8 @@ MuMu::MuMu(const edm::ParameterSet& iConfig)
   
   mu1soft(0), mu2soft(0), mu1tight(0), mu2tight(0), 
   mu1PF(0), mu2PF(0), mu1loose(0), mu2loose(0),
-  mu1Tracker(0), mu2Tracker(0), mu1Global(0), mu2Global(0),  
+  mu1Tracker(0), mu2Tracker(0), mu1Global(0), mu2Global(0),
+  mu1Medium(0), mu2Medium(0),
  
   // *******************************************************
  
@@ -906,6 +907,8 @@ void MuMu::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       mu2Tracker = iMuon2->isTrackerMuon();
       mu1Global = iMuon1->isGlobalMuon();
       mu2Global = iMuon2->isGlobalMuon();
+      mu1Medium = iMuon1->isMediumMuon();
+      mu2Medium = iMuon2->isMediumMuon();
       mu1loose = muon::isLooseMuon(*iMuon1);
       mu2loose = muon::isLooseMuon(*iMuon2);
 
@@ -1075,7 +1078,8 @@ void MuMu::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
  
    mu1soft = 0; mu2soft = 0; mu1tight = 0; mu2tight = 0;
    mu1PF = 0; mu2PF = 0; mu1loose = 0; mu2loose = 0; 
-   mu1Tracker = 0; mu2Tracker = 0; mu1Global = 0; mu2Global = 0;  
+   mu1Tracker = 0; mu2Tracker = 0; mu1Global = 0; mu2Global = 0;
+   mu1Medium = 0; mu2Medium = 0;
 
 
     mu1_L1_match = 0;
@@ -1372,6 +1376,8 @@ MuMu::beginJob()
   tree_->Branch("mu2Tracker",&mu2Tracker);
   tree_->Branch("mu1Global",&mu1Global);
   tree_->Branch("mu2Global",&mu2Global);
+  tree_->Branch("mu1Medium",&mu1Medium);
+  tree_->Branch("mu2Medium",&mu2Medium);
 
   // gen
   if (isMC_) {

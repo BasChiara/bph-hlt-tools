@@ -1,0 +1,18 @@
+{
+    "var" : "muProbe_pt",
+    "run" : "2022",
+    "isMC" : true,
+    "output_label" : "BtoJpsiK_2022",
+    "input_files"  : {
+        "2022_steam"    : "Run3_STEAM_selection/SF_test_mc2022_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2022EE_steam"  : "Run3_STEAM_selection/SF_test_mc2022EE_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2022_gm"       : "Run3_GM_DRmuL1_0p3_selection/SF_test_mc2022_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2022EE_gm"     : "Run3_GM_DRmuL1_0p3_selection/SF_test_mc2022EE_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json"
+    },
+    "legend_text" : {
+        "2022_steam"    : "STEAM 2022",
+        "2022EE_steam"  : "STEAM 2022 EE",
+        "2022_gm"       : "GM 2022",
+        "2022EE_gm"     : "GM 2022 EE"
+    }
+}

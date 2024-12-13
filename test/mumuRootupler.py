@@ -112,11 +112,13 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 # Global tag and input file
 GlobalTag_dict = {
+    '2022preEE' : '130X_mcRun3_2022_realistic_v5',
     '2024G' : '140X_dataRun3_Prompt_v4',
     '2024I' : '140X_dataRun3_Prompt_v4',
 }
 
 data_file_dict = {
+    'default': '',
     '2023C' : '/store/data/Run2023C/ParkingDoubleMuonLowMass7/MINIAOD/PromptReco-v4/000/367/770/00000/0c62c10b-6629-4caf-9f6f-ed6c0bbc65b0.root',
     '2023D' : '/store/data/Run2023D/Muon1/MINIAOD/PromptReco-v2/000/370/776/00000/a92b94e8-1455-4a5d-b4c9-323e43d486f9.root',
     '2024B' : '/store/data/Run2024B/ParkingDoubleMuonLowMass0/MINIAOD/PromptReco-v1/000/379/058/00000/d57fe8ca-ccb0-4df9-a027-d6fa9788b51d.root',
@@ -124,8 +126,9 @@ data_file_dict = {
     '2024I' : '/store/data/Run2024I/ParkingDoubleMuonLowMass0/MINIAOD/PromptReco-v1/000/386/478/00000/18ef5008-85db-44f2-a127-be7946bb5221.root',
 }
 mc_file_dict = {
+    'default': '',
     '2022EE' : '',
-    '2022preEE' : '',
+    '2022preEE' : '/store/mc/Run3Summer22MiniAODv4/InclusiveDileptonMinBias_TuneCP5Plus_13p6TeV_pythia8/MINIAODSIM/validDigi_130X_mcRun3_2022_realistic_v5-v4/2820000/37b0bc85-0086-469f-aee3-7ed5506d86b1.root',
 }
 
 #from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag

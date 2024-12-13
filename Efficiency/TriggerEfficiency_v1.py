@@ -72,7 +72,7 @@ if __name__== '__main__':
     denQuery = args.denQ if args.denQ else cfg.default_tagQuery        
     numQuery = args.numQ if args.numQ else cfg.default_probeQuery
 
-    arrays = ['DiMu_mass', 'DiMu_Prob', 'event', '*HLT_*' , 'mu*match', '*lxy*', '*charge*', 'L1*', '*dR*'] #+ ['DiMu_Prob']
+    arrays = ['DiMu_mass', 'DiMu_Prob', 'dz_muons' , 'event', '*HLT_*' , 'mu*match', '*lxy*', '*charge*', 'L1*', '*dR*'] 
     arrays+= 'muProbe_pt,muProbe_eta,muProbe_phi,muTag_pt,muTag_eta,muTag_phi'.split(',')
     arrays+= 'L3_muProbe_pt,L3_muProbe_eta,L3_muProbe_phi,L3_muTag_pt,L3_muTag_eta,L3_muTag_phi'.split(',')
 
@@ -91,13 +91,13 @@ if __name__== '__main__':
     else:
         efficiencyText = 'Efficiency'
 
-    print(f'{efficiencyText} : running on {input_file} with tag {tagPath} and probe {probePath}')
-    print(f' TAG query: {denQuery}')
-    print(f' PROBE query: {numQuery}')
+    print(f'[INFO] {efficiencyText} : running on {input_file} with tag {tagPath} and probe {probePath}')
+    print(f' - TAG query: \n  {denQuery}')
+    print(f' - PROBE query: \n  {numQuery}')
 
     for var1 in cfg.variables:
         
-        print(f' ---- 1D efficiency VS {var1} ----')
+        print(f'\n ---- 1D efficiency VS {var1} ----')
         
         bins, ratio, err = utils.get_and_store(
             data=data,
@@ -122,9 +122,10 @@ if __name__== '__main__':
         hep.cms.label(data=True, label=run, com=13.6)
         ax.set_ylim(0, 1.2)
         ax.grid(True)
+        out_name = f'{outputdir}/Tag{tagPath}_Probe{probePath}_{var1}.pdf'
         plt.savefig(f'{outputdir}/Tag{tagPath}_Probe{probePath}_{var1}.pdf', bbox_inches='tight')
         plt.close()
-
+        print(f' [INFO] saved plot in {out_name}')
         
         if var1 in extra_cuts:
             for indx, extra in enumerate(extra_cuts[var1]):

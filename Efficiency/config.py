@@ -25,16 +25,17 @@ default_tagQuery = ' & '.join([
         "(DiMu_Prob>0.005)",
         "(abs(muTag_eta)<2.4) & (abs(muProbe_eta)<2.4)",
         "(muTag_pt>8)",
-        "(muTag_L1_match==1)",
+        "(muTag_L1_match==1) & (muProbe_L1_match==1)",
         "(muTag_charge+muProbe_charge==0)",
         "(muTagGlobal==1) & (muProbeGlobal==1)",
         "(muTagloose==1)  & (muProbeloose==1)",
 ])
 
 default_probeQuery = ' & '.join([
-    "(muProbe_L1_match==1)",
+    "",
 ])
 L1_tag_path = 'HLT_Mu8_v'
 L1_probe_path = 'HLT_Mu0_L1DoubleMu_v'
+
 HLT_tag_path = 'HLT_Mu8_v'
 HLT_probe_path = 'HLT_Mu0_L1DoubleMu_v'

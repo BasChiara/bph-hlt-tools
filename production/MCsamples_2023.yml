@@ -1,0 +1,13 @@
+common:
+  globaltag: 130X_mcRun3_2023_realistic_v14
+  isMC: True
+
+samples:
+  
+  ButoJpsiK_JpsiMuMu_2023:
+    dataset: /ButoJpsiK_Jpsito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v3/MINIAODSIM 
+    filesperjob: 1
+
+  JPsito2Mu_pythia8_2023:
+    dataset: /Jpsito2Mu_JpsiPT8_TuneCP5_13p6TeV_pythia8/Run3Summer23BPixMiniAODv4-MUO_POG_130X_mcRun3_2023_realistic_postBPix_v2-v2/MINIAODSIM
+    filesperjob: 1

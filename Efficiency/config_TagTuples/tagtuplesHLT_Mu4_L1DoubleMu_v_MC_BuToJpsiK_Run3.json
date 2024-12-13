@@ -1,0 +1,16 @@
+{
+    "tagPath"   : "HLT_Mu4_L1DoubleMu_v",
+    "probePath" : "HLT_DoubleMu4_3_LowMass_v",
+    
+    "process" : "BuToJpsiK_JPsiMuMu",
+    "run_era" : "3",
+    "output_label" : "SF_test",
+    "isMC" : true,
+    
+    "dataset":{
+        "2022"      : "/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_MC/SFtest_2022_ButoJpsiK_Jpsito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen_evtgen_130X_mcRun3_SFtest_HLT_Mu4_L1DoubleMu_v_0000.root",
+        "2022EE"    : "/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_MC/SFtest_2022EE_ButoJpsiK_Jpsito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen_evtgen_130X_mcRu_SFtest_HLT_Mu4_L1DoubleMu_v_0000.root",
+        "2023"      : "/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_MC/SFtest_2023_ButoJpsiK_Jpsito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen_evtgen_130X_mcRun3_SFtest_HLT_Mu4_L1DoubleMu_v_0000.root",
+        "2023BPix"  : "/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_MC/SFtest_2023BPix_ButoJpsiK_Jpsito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen_evtgen_130X_mc_SFtest_HLT_Mu4_L1DoubleMu_v_0000.root"
+    }
+}

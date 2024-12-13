@@ -207,7 +207,7 @@ private:
 
   bool       mu1soft, mu2soft, mu1tight, mu2tight;  
   bool       mu1PF, mu2PF, mu1loose, mu2loose;  
-  bool       mu1Tracker, mu2Tracker, mu1Global, mu2Global;  
+  bool       mu1Tracker, mu2Tracker, mu1Global, mu2Global, mu1Medium, mu2Medium;  
  
   // *************************************
   unsigned int    nB;

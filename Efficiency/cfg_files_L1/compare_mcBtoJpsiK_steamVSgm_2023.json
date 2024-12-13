@@ -1,0 +1,18 @@
+{
+    "var" : "muProbe_pt",
+    "run" : "2023",
+    "isMC" : true,
+    "output_label" : "BtoJpsiK_2023",
+    "input_files"  : {
+        "2023_steam"    : "Run3_STEAM_selection/SF_test_mc2023_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2023BPix_steam"  : "Run3_STEAM_selection/SF_test_mc2023BPix_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2023_gm"       : "Run3_GM_DRmuL1_0p3_selection/SF_test_mc2023_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json",
+        "2023BPix_gm"     : "Run3_GM_DRmuL1_0p3_selection/SF_test_mc2023BPix_BuToJpsiK_JPsiMuMu/Efficiency1D_TagHLT_Mu8_vProbeHLT_Mu0_L1DoubleMu_v_muProbe_pt.json"
+    },
+    "legend_text" : {
+        "2023_steam"    : "STEAM 2023",
+        "2023BPix_steam"  : "STEAM 2023 BPix",
+        "2023_gm"       : "GM 2023",
+        "2023BPix_gm"     : "GM 2023 BPix"
+    }
+}

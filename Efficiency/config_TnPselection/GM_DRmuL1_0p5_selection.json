@@ -1,0 +1,5 @@
+{
+    "name" : "GM_DRmuL1_0p5_selection",
+    "tag_selection"   : "(2.9<DiMu_mass<3.3) & (DiMu_Prob>0.005) & (abs(dz_muons)<1.0) &(abs(muTag_eta)<2.4) & (abs(muProbe_eta)<2.4) & (muTag_charge+muProbe_charge==0) & (muTag_L1_match==1) & (muTagMedium==1) & (muProbeMedium==1)",
+    "probe_selection" : "(muProbe_L1_match==1)"
+}

@@ -1,0 +1,13 @@
+{
+    "tagPath"   : "HLT_Mu4_L1DoubleMu_v",
+    "probePath" : "HLT_DoubleMu4_3_LowMass_v",
+    
+    "process" : "InclusiveDileptonMinBias",
+    "run_era" : "2022",
+    "output_label" : "SF_test",
+    "isMC" : true,
+    
+    "dataset":{
+        "2022"      : "/eos/user/c/cbasile/BPH_trigger/TagTuples/Run3_MC/SFtest_2022_InclusiveDileptonMinBias_TuneCP5Plus_13p6TeV_pythia8_Run3Summer22MiniAODv3_Pilot_124X_mcRun3__SFtest_HLT_Mu4_L1DoubleMu_v_0001.root"
+    }
+}

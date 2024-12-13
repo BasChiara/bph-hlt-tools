@@ -1,5 +1,6 @@
 common:
   globaltag: 140X_dataRun3_Prompt_v4
+  isMC: False
 
 samples:
   # 2024 G
