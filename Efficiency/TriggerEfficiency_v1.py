@@ -15,7 +15,8 @@ import sys
 import config as cfg
 import utils as utils
 
-Eff2ds = False
+hist_eff1D = True
+plot_eff2D = True
 plt.style.use(hep.style.CMS)
 
 
@@ -59,7 +60,7 @@ if __name__== '__main__':
     parser.add_argument('--denQ', type=str, required=False,
                         help="Query on the denominator to calculate efficiencies" )
     parser.add_argument('--numQ', type=str, required=False,
-                        help="Query on the numerator to calculate efficiencies (in addition to the Probe Muon HLT match)" )    
+                        help="Query on the numerator to calculate efficiencies (in addition to the Probe Muon HLT match)" )
 
     args = parser.parse_args()
 
@@ -116,12 +117,20 @@ if __name__== '__main__':
 
         
         fig,ax = plt.subplots(figsize=[15,10])
-        ax.errorbar(bin_mean, ratio, err, xerr=bin_size, ls='none', marker='o', capsize=2 )    
+        ax.errorbar(bin_mean, ratio, err, xerr=bin_size, ls='none', fmt='ko', ecolor='k', capsize=2 )    
         ax.set_ylabel(efficiencyText)
         ax.set_xlabel(cfg.pretty_name.get(var1, var1))
         hep.cms.label(data=True, label=run, com=13.6)
         ax.set_ylim(0, 1.2)
         ax.grid(True)
+        # draw histogram of the pass+fail muon pairs
+        if hist_eff1D:
+            h_all, _ = utils.passfail_histo(data, var1, denQuery, numQuery, probePath, cfg.Bins1d, norm=True)
+            ax2 = ax.twinx()
+            ax2.hist(h_all[1][:-1], bins=h_all[1], weights=h_all[0], histtype='step', color='red', linestyle='dashed', label='Pass+Fail')
+            ax2.set_ylabel('Events')
+            ax2.legend()
+
         out_name = f'{outputdir}/Tag{tagPath}_Probe{probePath}_{var1}.pdf'
         plt.savefig(f'{outputdir}/Tag{tagPath}_Probe{probePath}_{var1}.pdf', bbox_inches='tight')
         plt.close()
@@ -141,9 +150,10 @@ if __name__== '__main__':
                     input_file=input_file,
                     outputdir=outputdir,
                     v_name=f'v{indx}')
-
+        
+        if not plot_eff2D: continue
         for var2 in cfg.variables:            
-            if not Eff2ds: continue
+            
             if var2 == var1: continue
 
             print(f' ---- 2D efficiency VS {var1} VS {var2} ----')
@@ -161,6 +171,7 @@ if __name__== '__main__':
 
 
             for i in range(ratio.shape[0]):
+               continue
                for j in range(ratio.shape[1]):
                    bin_center_x = xcenters[i]
                    bin_center_y = ycenters[j]

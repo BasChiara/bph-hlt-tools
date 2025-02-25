@@ -51,15 +51,20 @@ class npEncoder(json.JSONEncoder):
             return obj.tolist()
         return super(npEncoder, self).default(obj)
 
-def get_and_store(data, var, denQuery, numQuery, tagPath, probePath, Bins1d, input_file, outputdir, v_name=''):
-        
-    h_all      = np.histogram(data.query(denQuery)[var], bins=Bins1d[var])
+def passfail_histo(data, var, denQuery, numQuery, probePath, Bins1d, norm=False):
+
+    h_all      = np.histogram(data.query(denQuery)[var], bins=Bins1d[var], density=norm)
     ccomplete_numQuery = denQuery
     if numQuery:
         ccomplete_numQuery += " & "+numQuery 
     ccomplete_numQuery+= f' & muProbe_{probePath}==1'
-    h_passprob = np.histogram(data.query(ccomplete_numQuery)[var], 
-                                bins=Bins1d[var])        
+    h_passprob = np.histogram(data.query(ccomplete_numQuery)[var], bins=Bins1d[var], density=norm) 
+
+    return h_all, h_passprob
+
+def get_and_store(data, var, denQuery, numQuery, tagPath, probePath, Bins1d, input_file, outputdir, v_name=''):
+        
+    h_all, h_passprob = passfail_histo(data, var, denQuery, numQuery, probePath, Bins1d)     
     ratio = h_passprob[0]/h_all[0]
     err  = clopper_pearson(h_passprob[0], h_all[0])
 
@@ -81,3 +86,29 @@ def get_and_store(data, var, denQuery, numQuery, tagPath, probePath, Bins1d, inp
         json.dump(efficiency_output, jj, indent=4, cls=npEncoder)
     
     return h_all[1], ratio, err
+
+def get_efficiency2D(data, var, denQuery, numQuery, tagPath, probePath, Bins_xy, norm=False):
+    
+    xedges = np.array(Bins_xy[0])
+    yedges = np.array(Bins_xy[1])
+    passprobeQuery = ' & '.join([denQuery, numQuery])
+    
+    h_passprob  = np.histogram2d(
+        data.query(passprobeQuery)[var[0]], 
+        data.query(passprobeQuery)[var[1]], 
+        bins=[xedges, yedges],
+        weights=data.query(passprobeQuery)[f'muProbe_{probePath}'],
+        density=norm)
+    h_all = np.histogram2d(
+        data.query(denQuery)[var[0]], 
+        data.query(denQuery)[var[1]], 
+        bins=[xedges, yedges],
+        density=norm)
+    
+    ratio  = np.divide(
+        h_passprob[0], 
+        h_all[0], 
+        out=np.zeros_like(h_passprob[0]), 
+        where=h_all[0] != 0)
+
+    return h_all, h_passprob, ratio

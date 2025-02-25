@@ -51,8 +51,10 @@ if isinstance(probe_selection, list):
 
 
 for era in inputs:
-
+    # efficiency calculation
     output_label = f'{label}_{isMC}{era}_{process}'
     command = f'python3 TriggerEfficiency_v1.py --input {inputs[era]} -o {output_label} -r {run}_{selection_name}  -t {tag_path} -p {probe_path} --denQ "{tag_selection}" --numQ "{probe_selection}"'
-
     os.system(command) 
+    # phase space plotter
+    command = f'python3 phaseSpace_plotter.py --input_file {inputs[era]} -o {output_label} -r {run}_{selection_name}  -t {tag_path} -p {probe_path} --denQ "{tag_selection}" --numQ "{probe_selection}" --plot2D'
+    os.system(command)
