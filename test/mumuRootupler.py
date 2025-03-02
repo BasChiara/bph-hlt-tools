@@ -1,26 +1,25 @@
 L1_seeds = ['L1_DoubleMu0er1p4_SQ_OS_dEta_Max1p2',
-                                'L1_DoubleMu4er2p0_SQ_OS_dR_Max1p6',
-                                'L1_DoubleMu5_SQ_OS_dR_Max1p6',
-                                'L1_DoubleMu3er2p0_SQ_OS_dR_Max1p6',
-                                'L1_DoubleMu0er1p5_SQ_OS_dEta_Max1p2',
-                                'L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6',
-                                'L1_DoubleMu0er1p4_OQ_OS_dEta_Max1p6',
-                                'L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5',
-                                'L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4',
-                                'L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4',
-                                'L1_DoubleMu4p5_SQ_OS_dR_Max1p2',
-                                'L1_DoubleMu4_SQ_OS_dR_Max1p2', 
-                                'L1_DoubleMu3er2p0_SQ_OS_dR_Max1p4',
-                                
-                                'L1_DoubleMu0er1p5_SQ_dR_Max1p4',
-                                'L1_DoubleMu0er2p0_SQ_dEta_Max1p6',
-                                'L1_DoubleMu0er2p0_SQ_dEta_Max1p5',
+            'L1_DoubleMu4er2p0_SQ_OS_dR_Max1p6',
+            'L1_DoubleMu5_SQ_OS_dR_Max1p6',
+            'L1_DoubleMu3er2p0_SQ_OS_dR_Max1p6',
+            'L1_DoubleMu0er1p5_SQ_OS_dEta_Max1p2',
+            'L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6',
+            'L1_DoubleMu0er1p4_OQ_OS_dEta_Max1p6',
+            'L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5',
+            'L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4',
+            'L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4',
+            'L1_DoubleMu4p5_SQ_OS_dR_Max1p2',
+            'L1_DoubleMu4_SQ_OS_dR_Max1p2', 
+            'L1_DoubleMu3er2p0_SQ_OS_dR_Max1p4',
+            
+            'L1_DoubleMu0er1p5_SQ_dR_Max1p4',
+            'L1_DoubleMu0er2p0_SQ_dEta_Max1p6',
+            'L1_DoubleMu0er2p0_SQ_dEta_Max1p5',
 
-                                'L1_SingleMu10_SQ14_BMTF',
-                                'L1_SingleMu11_SQ14_BMTF',
-                                'L1_SingleMu0_BMTF',
-
-                                ]
+            'L1_SingleMu10_SQ14_BMTF',
+            'L1_SingleMu11_SQ14_BMTF',
+            'L1_SingleMu0_BMTF',
+]
 
 HLT_Paths=[ "HLT_DoubleMu4_3_LowMass_v",
             "HLT_DoubleMu4_3_LowMass_SS_v",
@@ -46,18 +45,7 @@ HLT_Paths=[ "HLT_DoubleMu4_3_LowMass_v",
             "HLT_Mu10_Barrel_L1HP11_IP6_v",
 
             "HLT_Mu3er1p5_PFJet100er2p5_PFMET90_PFMHT90_IDTight_v",
-            "HLT_Mu3_L1SingleMu5orSingleMu7_v",
-
-
-
-
-            #"HLT_DoubleEle5_eta1p22_mMax6_v",
-            #"HLT_DoubleEle5p5_eta1p22_mMax6_v",
-            #"HLT_DoubleEle6_eta1p22_mMax6_v",
-            #"HLT_DoubleEle6p5_eta1p22_mMax6_v",
-            #"HLT_DoubleEle7_eta1p22_mMax6_v",
-            #"HLT_DoubleEle7p5_eta1p22_mMax6_v",
-            
+            "HLT_Mu3_L1SingleMu5orSingleMu7_v",            
 ]
 
 fired_HLTs = [
