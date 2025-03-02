@@ -1,0 +1,10 @@
+*__pycache__/
+*.__afs*
+*.pyc
+*.root
+*.png
+*.pdf
+*.log
+production/BPHTriggerTuples/
+
+*.json
