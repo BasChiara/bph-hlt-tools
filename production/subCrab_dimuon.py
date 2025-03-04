@@ -4,15 +4,17 @@ This is a small script that does the equivalent of multicrab.
 source /cvmfs/cms.cern.ch/common/crab-setup.sh
 """
 import os
+import yaml
 from optparse import OptionParser
 
 import CRABClient
 from CRABAPI.RawCommand import crabCommand
 from CRABClient.ClientExceptions import ClientException
-#from httplib import HTTPException #python2
 from http.client import HTTPException #python3
 #from CRABClient.UserUtilities import config
 
+
+_ProductionTag = '_SFtestL1fix'
 def getOptions():
     """
     Parse and return the arguments provided by the user.
@@ -40,6 +42,11 @@ def getOptions():
                       default = '',
                       help = "options for crab command CMD",
                       metavar = 'OPTS')
+    
+    parser.add_option('-i', '--inputDataset',
+                      dest = 'inputDataset',
+                      default = '',
+                      help = "input dataset in .yaml file",)
 
     (options, arguments) = parser.parse_args()
 
@@ -68,57 +75,73 @@ def main():
         #--------------------------------------------------------
         from CRABClient.UserUtilities import config
         config = config()
-        
-        #jobname = 'Bsmumuphi_miniAOD_LowMass1_2023Cv0'
-        
+         
         config.General.requestName = None
-        config.General.workArea = 'TriggerEfficiencies_MC_Try1'
+        config.General.workArea = 'BPHTriggerTuples'
         config.General.transferOutputs = True
         config.General.transferLogs = False
 
         config.JobType.pluginName = 'Analysis'
-        config.JobType.psetName = '../test/mumuRootupler.py'
-        config.JobType.pyCfgParams = ['isMC=True']
-        #config.JobType.allowUndistributedCMSSW = True
+        config.JobType.psetName = '../test/mumuRootupler_demo.py'
+        config.JobType.allowUndistributedCMSSW = True
         
         config.Data.inputDataset = None
         config.Data.inputDBS = 'global'
-        config.Data.splitting = 'FileBased'
-        config.Data.unitsPerJob = 7
-        config.Data.totalUnits  = 500
-        #config.Data.lumiMask = 'Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt'
-        
-        config.Data.outLFNDirBase = '/store/user/hcrottel/'+str(config.General.workArea)
+        #config.Data.splitting = 'FileBased'
+        config.Data.splitting = 'LumiBased'
+        config.Data.unitsPerJob = 15
+        #config.Data.totalUnits  = 500
+        #config.Data.lumiMask = '/eos/user/c/cmsdqm/www/CAF/certification/Collisions24/DCSOnly_JSONS/dailyDCSOnlyJSON/Collisions24_13p6TeV_378981_380403_DCSOnly_TkPx.json'
+        #config.Data.runRange = '379765-379769'
+
+        config.Data.outLFNDirBase = '/store/group/phys_bphys/cbasile/'+str(config.General.workArea)
         config.Data.publication = False
         config.Data.outputDatasetTag = None
-        config.Site.storageSite = 'T3_CH_CERNBOX'
-        #config.Site.whitelist = ['T2_US*']
         #config.Data.ignoreLocality = True
-        #config.Site.storageSite = None # Choose your site.
+
+        config.Site.storageSite = 'T2_CH_CERN'
+        #config.Site.storageSite = 'T3_CH_CERNBOX'
         
         #--------------------------------------------------------
-        # Will submit one task for each of these input datasets.
-        inputDatasets = [
-            "/ButoJpsiK_Jpsito2Mu_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22EEMiniAODv3-124X_mcRun3_2022_realistic_postEE_v1-v2/MINIAODSIM",
-            "/BuToKJPsiMuMu_SoftQCDnonD_TuneCP5_13p6TeV-pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v2/MINIAODSIM",
-            "/K0sToMuMu_K0sFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22MiniAODv4-130X_mcRun3_2022_realistic_v5-v1/MINIAODSIM",
-            "/InclusiveDileptonMinBias_TuneCP5Plus_13p6TeV_pythia8/Run3Summer22MiniAODv3-Pilot_124X_mcRun3_2022_realistic_v12-v5/MINIAODSIM",
-            #'/ParkingDoubleMuonLowMass0/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass1/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass2/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass3/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass4/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass5/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass6/Run2023C-PromptReco-v4/MINIAOD',
-            #'/ParkingDoubleMuonLowMass7/Run2023C-PromptReco-v4/MINIAOD',
+        # get dataset from yaml file
+        with open(options.inputDataset, 'r') as stream:
+            try:
+                input_config = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+            
+        common  = input_config['common'] if 'common' in input_config else {}
+        samples = input_config['samples']
+
+        # common settings
+        globaltag = common['globaltag'] if 'globaltag' in common else ''
+        isMC = common['isMC'] if 'isMC' in common else False
+
+        config.JobType.pyCfgParams = [
+            f'period=default',
+            f'isMC={isMC}',
+            f'globalTag={globaltag}',
         ]
-        
-        for inDS in inputDatasets:
+
+        for dataset_name in samples:
+            # splitting by files for MC
+            if isMC:
+                config.Data.splitting = 'FileBased'
+                config.Data.unitsPerJob = int(samples[dataset_name]['filesperjob'])
+            
+            # dataset
+            inDS = samples[dataset_name]['dataset']
+            print(f'[+] processing {dataset_name} dataset : {inDS} ')
             # inDS is of the form /A/B/C. Since B is unique for each inDS, use this in the CRAB request name.
-            #config.General.requestName = inDS.split('/')[1]+'-'+inDS.split('/')[2]
-            config.General.requestName = inDS.split('/')[1]
+            #requestName = inDS.split('/')[1]+'-'+inDS.split('/')[2] + _ProductionTag      
+            requestName = dataset_name + _ProductionTag
+            #if len(requestName) > 100:
+            #    tag_len = len(_ProductionTag)
+            #    requestName = (inDS.split('/')[1]+'-'+inDS.split('/')[2])[:100 - tag_len] + _ProductionTag
+            config.General.requestName = requestName
             config.Data.inputDataset = inDS
             config.Data.outputDatasetTag = '%s_%s' % (config.General.workArea, config.General.requestName)
+            print(config)
             # Submit.
             try:
                 print ( "Submitting for input dataset %s" % (inDS) )
@@ -127,7 +150,7 @@ def main():
                 print ( "Submission for input dataset %s failed: %s" % (inDS, hte.headers) )
             except ClientException as cle:
                 print ( "Submission for input dataset %s failed: %s" % (inDS, cle) )
-                
+
                 # All other commands can be simply executed.
     elif options.workArea:
 
