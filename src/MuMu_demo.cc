@@ -76,7 +76,7 @@ MuMu_demo::MuMu_demo(const edm::ParameterSet& iConfig)
   bMasscut_(iConfig.getParameter<std::vector<double> >("bMasscut")),
      
   debug_(iConfig.getParameter<bool>("debug")),
-  tree_(0), tree_muons(0), tree_gen_muons(0), tree_L1muons(0), tree_L2muons(0), tree_L3muons(0),
+  tree_(0), //tree_muons(0), tree_gen_muons(0), tree_L1muons(0), tree_L2muons(0), tree_L3muons(0),
 
   mu1_charge(0), mu2_charge(0),
   mu1_L1_match(0), mu2_L1_match(0),
@@ -117,9 +117,10 @@ MuMu_demo::MuMu_demo(const edm::ParameterSet& iConfig)
  
   // *******************************************************
  
-  nB(0), nMu(0),
+  nMu(0),
   
   DiMu_dR(0),
+  DiMu_mu1trk2_dR(0), DiMu_mu2trk1_dR(0),
   DiMu_dz(0),
   DiMu_mass(0), DiMu_mass_err(0), 
   DiMu_pt(0), DiMu_eta(0), DiMu_phi(0),
@@ -147,6 +148,8 @@ MuMu_demo::MuMu_demo(const edm::ParameterSet& iConfig)
 
   L1_mu1_dR(-1),
   L1_mu2_dR(-1),
+  L1vtx_mu1_dR(-1),
+  L1vtx_mu2_dR(-1),
   dR_muon1_L2(-1),
   dR_muon2_L2(-1),
   dR_muon1_L3(-1),
@@ -274,68 +277,64 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByToken(l1MuonsToken_, gmuons);
 
   // loop over offline muon collection
-  //for (size_t i = 0; i < thePATMuonHandle->size(); i++) {
+  if (debug_){
+    for (size_t i = 0; i < thePATMuonHandle->size(); i++) {
 
-  //  // propagate the muon to the muon system
-  //  edm::Ptr<pat::Muon> muon_trk(thePATMuonHandle, i);
-  //  TrajectoryStateOnSurface propagated = matcher_.extrapolate(*muon_trk);
-  //  float deltaR_prop_mu = -1;
-  //  if (propagated.isValid()){
-  //    GlobalPoint pos = propagated.globalPosition();
-  //    deltaR_prop_mu = reco::deltaR(pos.eta(), pos.phi(), muon_trk->eta(), muon_trk->phi());
-  //  }
-  //  
-  //  // access the association map to L1 muons by the pat::Muon key
-  //  auto muRef = muonsView->refAt(i);
-  //  edm::Ref<pat::TriggerObjectStandAloneCollection> matchRef = (*l1Matches)[muRef];
-  //  // check to which L1 object the reco muon is matched
-  //  if (debug_) std::cout << "Reco muon " << i 
-  //  << "\t pT = " << muRef->pt() 
-  //  //<< "\t eta =" << muRef->eta()
-  //  //<< "\t phi =" << muRef->phi()
-  //  << "\t deltaR(offline, my-prop) = " << deltaR_prop_mu // dR between offline muon and propagated muon
-  //  << std::endl;
-  //  if (matchRef.isNonnull()){
-  //    const pat::TriggerObjectStandAlone & matchedObj = *matchRef;
-  //    if (debug_) std::cout << "Match L1 muon \t pT = " << matchRef->pt() 
-  //    //<< "\t eta =" << matchRef->eta()
-  //    //<< "\t phi =" << matchRef->phi()
-  //    << "\t quality = " << (*l1MatchesQuality)[muRef]
-  //    << "\t deltaR(L1, prop)  = " << (*l1MatchesDeltaR)[muRef] // dR between L1 muon and propagated muon
-  //    << std::endl; 
-  //  }
-  //  // loop on propagated reco muons to L1 object they matched
-  //  if (i >= propL1MuonsCollection->size()) continue;
-  //  float deltaR_L1_prop = -1;
-  //  const pat::TriggerObjectStandAlone& muon = propL1MuonsCollection->at(i);
-  //  if (matchRef.isNonnull()){
-  //    deltaR_L1_prop = reco::deltaR(matchRef->eta(), matchRef->phi(), muon.eta(), muon.phi());
-  //  }
-  //  if (debug_) std::cout << "Propagated muon " << i 
-  //  << "\t pT = " << muon.pt() 
-  //  //<< "\t eta =" << muon.eta()
-  //  //<< "\t phi =" << muon.phi()
-  //  << "\t deltaR(offline, prop) = " << reco::deltaR(muRef->eta(), muRef->phi(), muon.eta(), muon.phi())
-  //  << "\t deltaR(L1matched, prop) = " << deltaR_L1_prop
-  //  << std::endl;
+      // propagate the muon to the muon system
+      edm::Ptr<pat::Muon> muon_trk(thePATMuonHandle, i);
+      TrajectoryStateOnSurface propagated = matcher_.extrapolate(*muon_trk);
+      float deltaR_prop_mu = -1;
+      if (propagated.isValid()){
+        GlobalPoint pos = propagated.globalPosition();
+        deltaR_prop_mu = reco::deltaR(pos.eta(), pos.phi(), muon_trk->eta(), muon_trk->phi());
+      }
+      
+      // access the association map to L1 muons by the pat::Muon key
+      auto muRef = muonsView->refAt(i);
+      edm::Ref<pat::TriggerObjectStandAloneCollection> matchRef = (*l1Matches)[muRef];
+      // check to which L1 object the reco muon is matched
+      if (debug_) std::cout << "offline mu " << i 
+      << "\t pT = " << muRef->pt() 
+      << "\t deltaR(offline, my-prop) = " << deltaR_prop_mu // dR between offline muon and propagated muon
+      << std::endl;
+      if (matchRef.isNonnull()){
+        const pat::TriggerObjectStandAlone & matchedObj = *matchRef;
+        if (debug_) std::cout << "[L1MuonMatcher] L1 mu \t pT = " << matchRef->pt() 
+        << "\t quality = "           << (*l1MatchesQuality)[muRef]
+        << "\t deltaR(L1, prop)  = " << (*l1MatchesDeltaR)[muRef] // dR between L1 muon and propagated muon
+        << std::endl; 
+      }
+      // loop on propagated reco muons to L1 object they matched
+      if (i >= propL1MuonsCollection->size()) continue;
+      float deltaR_L1_prop = -1;
+      const pat::TriggerObjectStandAlone& muon = propL1MuonsCollection->at(i);
+      if (matchRef.isNonnull()){
+        deltaR_L1_prop = reco::deltaR(matchRef->eta(), matchRef->phi(), muon.eta(), muon.phi());
+      }
+      if (debug_) std::cout << "[L1MuonMatcher] prop mu " << i 
+      << "\t pT = " << muon.pt() 
+      << "\t deltaR(offline, prop) = " << reco::deltaR(muRef->eta(), muRef->phi(), muon.eta(), muon.phi())
+      << "\t deltaR(L1matched, prop) = " << deltaR_L1_prop
+      << std::endl;
 
-  //  // loop on L1 object
-  //  for (auto it = gmuons->begin(0); it != gmuons->end(0); ++it){
-  //    deltaR_prop_mu = -1.;
-  //    if (propagated.isValid()) deltaR_prop_mu = reco::deltaR(propagated.globalPosition().eta(), propagated.globalPosition().phi(), it->eta(), it->phi() + 1.25 * 3.14/180);
-  //    if (debug_) std::cout << "L1 muon "
-  //    << "\t pT = " << it->pt() 
-  //    //<< "\t eta =" << it->eta()
-  //    //<< "\t phi =" << it->phi()
-  //    << "\t deltaR(L1, offline) = " << reco::deltaR(muRef->eta(), muRef->phi(), it->eta(), it->phi())
-  //    << "\t deltaR(L1, my-prop) = " << deltaR_prop_mu
-  //    << std::endl;
-  //  }
+      // loop on L1 object
+      for (auto it = gmuons->begin(0); it != gmuons->end(0); ++it){
+        deltaR_prop_mu = -1.;
+        if (propagated.isValid()) deltaR_prop_mu = reco::deltaR(propagated.globalPosition().eta(), propagated.globalPosition().phi(), it->eta(), it->phi() + 1.25 * M_PI/180.);
+        if (debug_) std::cout << "L1 muon "
+        << "\t pT = " << it->pt()
+        << "\t deltaR(L1, offline) = " << reco::deltaR(muRef->eta(), muRef->phi(), it->eta(), it->phi())
+        << "\t deltaR(L1vtx, offline) = " << reco::deltaR(muRef->eta(), muRef->phi(), it->etaAtVtx(), it->phiAtVtx())
+        << "\t deltaR(L1, my-prop) = " << deltaR_prop_mu
+        << std::endl;
+      }
 
-  //  std::cout << std::endl;
-  //}
-  L1matching(iEvent);
-
+      std::cout << std::endl;
+    }
+  }
+  bool USE_L1atVTX_ = false;
+  //L1matching(iEvent, USE_L1atVTX_);
+  L1matching_fix(iEvent, USE_L1atVTX_);
 
   //*********************************//
   //        J/psi --> mu+ mu-        //
@@ -345,7 +344,8 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Ptr<pat::Muon> iMuon1(thePATMuonHandle, index_mu1 );
     if (debug_) std::cout << " + muon1 pt = " << iMuon1->pt() << std::endl;
     
-    for (size_t index_mu2 = index_mu1+1; index_mu2 < thePATMuonHandle->size(); ++index_mu2) {
+    //for (size_t index_mu2 = index_mu1+1; index_mu2 < thePATMuonHandle->size(); ++index_mu2) {
+    for (size_t index_mu2 = 0; index_mu2 < thePATMuonHandle->size(); ++index_mu2) { //allow tag-probe exchange
       edm::Ptr<pat::Muon> iMuon2(thePATMuonHandle, index_mu2);
       
       if(iMuon1==iMuon2) continue;
@@ -369,43 +369,46 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       // ********** TRIGGER MATCHING **********
       const pat::Muon* muon1 = &(*iMuon1);
       const pat::Muon* muon2 = &(*iMuon2);
-      
+
+      // propagate the muons to the muon system
+      TrajectoryStateOnSurface propagated = matcher_.extrapolate(*muon1);
+      mu1_isPropagated = propagated.isValid();
+      if (propagated.isValid()){
+        mu1_prop_pt = propagated.globalMomentum().perp(); 
+        mu1_prop_eta  = propagated.globalPosition().eta(); mu1_prop_phi = propagated.globalPosition().phi();
+      }
+      propagated = matcher_.extrapolate(*muon2);
+      mu2_isPropagated = propagated.isValid();
+      if (propagated.isValid()){
+        mu2_prop_pt = propagated.globalMomentum().perp(); 
+        mu2_prop_eta  = propagated.globalPosition().eta(); mu2_prop_phi = propagated.globalPosition().phi();
+      }     
+
+
       // L1 matching
       mu1_L1_idx = L1_muons_matched[index_mu1];
+      mu1_L1_match = mu1_L1_idx >= 0;
       mu2_L1_idx = L1_muons_matched[index_mu2];
-      mu1_L1_match = 0;
-      mu2_L1_match = 0;
+      mu2_L1_match = mu2_L1_idx >= 0;
       L1_mu1_dR = -1;
       L1_mu2_dR = -1;
       if (mu1_L1_idx >= 0) {
-        mu1_L1_match = 1;
-        auto L1mu = gmuons->at(0, mu1_L1_idx);
-        L1_mu1_pt = L1mu.pt();
+        auto L1mu  = gmuons->at(0, mu1_L1_idx);
+        L1_mu1_pt  = L1mu.pt();
         L1_mu1_eta = L1mu.eta();
         L1_mu1_phi = L1mu.phi();
-        L1_mu1_dR = reco::deltaR(muon1->eta(), muon1->phi(), L1mu.eta(), L1mu.phi());
-        // propagate the muon to the muon system
-        TrajectoryStateOnSurface propagated = matcher_.extrapolate(*muon1);
-        if (propagated.isValid()){
-          //mu1_prop_pt = propagated.globalMomentum().pt(); 
-          mu1_prop_eta = propagated.globalPosition().eta(); mu1_prop_phi = propagated.globalPosition().phi();
-          mu1_L1prop_dR = reco::deltaR(mu1_prop_eta, mu1_prop_phi, L1mu.eta(), L1mu.phi());
-        }
+        L1_mu1_dR    = reco::deltaR(muon1->eta(), muon1->phi(), L1mu.eta(), L1mu.phi());
+        L1vtx_mu1_dR = reco::deltaR(muon1->eta(), muon1->phi(), L1mu.etaAtVtx(), L1mu.phiAtVtx());
+        if (mu1_isPropagated) mu1_L1prop_dR = reco::deltaR(mu1_prop_eta, mu1_prop_phi, L1mu.eta(), L1mu.phi());
       }
       if (mu2_L1_idx >= 0) {
-        mu2_L1_match = 1;
-        auto L1mu = gmuons->at(0, mu2_L1_idx);
-        L1_mu2_pt = L1mu.pt();
+        auto L1mu  = gmuons->at(0, mu2_L1_idx);
+        L1_mu2_pt  = L1mu.pt();
         L1_mu2_eta = L1mu.eta();
         L1_mu2_phi = L1mu.phi();
-        L1_mu2_dR = reco::deltaR(muon2->eta(), muon2->phi(), L1mu.eta(), L1mu.phi());
-        // propagate the muon to the muon system
-        TrajectoryStateOnSurface propagated = matcher_.extrapolate(*muon2);
-        if (propagated.isValid()){
-          //mu2_prop_pt = propagated.globalMomentum().pt();  // FIXME : check this
-          mu2_prop_eta = propagated.globalPosition().eta(); mu2_prop_phi = propagated.globalPosition().phi();
-          mu2_L1prop_dR = reco::deltaR(mu2_prop_eta, mu2_prop_phi, L1mu.eta(), L1mu.phi());
-        }
+        L1_mu2_dR    = reco::deltaR(muon2->eta(), muon2->phi(), L1mu.eta(),      L1mu.phi());
+        L1vtx_mu2_dR = reco::deltaR(muon2->eta(), muon2->phi(), L1mu.etaAtVtx(), L1mu.phiAtVtx());
+        if (mu2_isPropagated) mu2_L1prop_dR = reco::deltaR(mu2_prop_eta, mu2_prop_phi, L1mu.eta(), L1mu.phi());
       }
       if (mu1_L1_match==1 && mu2_L1_match==1){
         DiMu_L1_dR = reco::deltaR(L1_mu1_eta, L1_mu1_phi, L1_mu2_eta, L1_mu2_phi);
@@ -463,7 +466,7 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
       }
       if ( mu1_L3_match==1){
-            L3_mu1_pt = muon1_trgobj.pt();
+            L3_mu1_pt  = muon1_trgobj.pt();
             L3_mu1_eta = muon1_trgobj.eta();
             L3_mu1_phi = muon1_trgobj.phi();
         }
@@ -520,7 +523,13 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       mu1dz = glbTrack1->dz(bestVtx.position()) ;
       mu2dz = glbTrack2->dz(bestVtx.position()) ;
 
-      DiMu_dR = reco::deltaR2(iMuon1->eta(),iMuon1->phi(), iMuon2->eta(), iMuon2->phi());
+      DiMu_dR = reco::deltaR(iMuon1->eta(),iMuon1->phi(), iMuon2->eta(), iMuon2->phi());
+      if(iMuon2->innerTrack().isNonnull() && iMuon2->innerTrack().isAvailable()){
+        DiMu_mu1trk2_dR = reco::deltaR(iMuon1->eta(),iMuon1->phi(), iMuon2->innerTrack()->eta(), iMuon2->innerTrack()->phi());
+      }
+      if(iMuon1->innerTrack().isNonnull() && iMuon1->innerTrack().isAvailable()){
+        DiMu_mu2trk1_dR = reco::deltaR(iMuon2->eta(),iMuon2->phi(), iMuon1->innerTrack()->eta(), iMuon1->innerTrack()->phi());
+      }
       DiMu_dz = iMuon2->vz() - iMuon1->vz();
       
       mu1dxy_beamspot = glbTrack1->dxy(vertexBeamSpot.position()) ;// 
@@ -534,7 +543,6 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       //fill the tree
       tree_->Fill();
 
-      nB++;	       
       //muonParticles.clear();
       //vFitMCParticles.clear();
 
@@ -574,7 +582,7 @@ void MuMu_demo::L1results(const edm::Event& iEvent, const edm::EventSetup& iSetu
   for (size_t i_l1t = 0; i_l1t < decisionsFinal.size(); i_l1t++){
     string l1tName = (decisionsFinal.at(i_l1t)).first;
     
-    if (debug_){
+    if (debug_ && false){
       for(std::size_t i_input = 0; i_input < L1Seeds_.size(); ++i_input) {
         if (l1tName.find(L1Seeds_[i_input]) != std::string::npos){
           std::cout << "\t - Name = " << l1tName << std::endl;
@@ -590,25 +598,11 @@ void MuMu_demo::L1results(const edm::Event& iEvent, const edm::EventSetup& iSetu
       for(std::size_t i = 0; i < L1Seeds_.size(); ++i) {
         if (l1tName.find(L1Seeds_[i]) != std::string::npos){ 
           l1sVector[i] = 1;
-          std::cout << " fired L1 Seed: " << L1Seeds_[i] << std::endl;
+          if(debug_) std::cout << " fired L1 Seed: " << L1Seeds_[i] << std::endl;
         }
       }
     }
   }// loop on L1 seeds
-
-  // save L1 muons information // FIXME 
-  edm::Handle<BXVector<l1t::Muon> > L1_muons;
-  iEvent.getByToken(l1MuonsToken_, L1_muons);
-  //for (auto L1_mu_it = L1_muons->begin(0); L1_mu_it != L1_muons->end(0); ++L1_mu_it){
-    //L1mu_pt = L1_mu_it->pt();
-    //L1mu_eta = L1_mu_it->eta();
-    //L1mu_phi = L1_mu_it->phi();
-    //L1mu_etaAtVtx = L1_mu_it->etaAtVtx();
-    //L1mu_phiAtVtx = L1_mu_it->phiAtVtx();
-    //L1mu_charge = L1_mu_it->charge();
-    //L1mu_quality = L1_mu_it->hwQual(); 
-  //} FIXEM : fill L1 muons informations
-
 }//L1results
 
 
@@ -648,7 +642,7 @@ bool  MuMu_demo::TriggerCheck(const std::vector<int>& trigger_bits){
 }
 
 
-void MuMu_demo::L1matching(const edm::Event& iEvent){
+void MuMu_demo::L1matching(const edm::Event& iEvent, const bool& L1atVtx){
   // FIXME: not optimal when there is a better gemetrical matching for a softer muon
 
   // offline muons
@@ -658,23 +652,32 @@ void MuMu_demo::L1matching(const edm::Event& iEvent){
   edm::Handle<BXVector<l1t::Muon> > L1_muons;
   iEvent.getByToken(l1MuonsToken_, L1_muons);
 
-  const double deltaPhi_offset = 1.25 * 3.14/180; //FIXME: hardcoded value
+  const double deltaPhi_offset = 1.25 * M_PI/180.; //FIXME: hardcoded value
   const double dR_max_L1matching = 1.0; //FIXME: hardcoded value
   L1_muons_closest.resize(offline_muons->size());
+  
   for (size_t i = 0; i < offline_muons->size(); ++i){
     const pat::Muon& off_muon = offline_muons->at(i);
-
-    // propagate the muon to the muon system
-    TrajectoryStateOnSurface prop_muon = matcher_.extrapolate(off_muon);
-    if (!prop_muon.isValid()) continue;
-    
-    // loop on L1 muons
     int l1_idx = 0;
     std::vector<std::pair<int,double>> L1idx_dR;
-    for (auto L1_mu_it = L1_muons->begin(0); L1_mu_it != L1_muons->end(0); ++L1_mu_it){
-      double dR = reco::deltaR(prop_muon.globalPosition().eta(), prop_muon.globalPosition().phi(), L1_mu_it->eta(), L1_mu_it->phi() + deltaPhi_offset);
-      if (dR < dR_max_L1matching) L1idx_dR.push_back(std::make_pair(l1_idx, dR));
-      l1_idx++;
+    if (L1atVtx){
+      // use L1 muon at vertex
+      for (auto L1_mu_it = L1_muons->begin(0); L1_mu_it != L1_muons->end(0); ++L1_mu_it){
+        double dR = reco::deltaR(off_muon.eta(), off_muon.phi(), L1_mu_it->etaAtVtx(), L1_mu_it->phiAtVtx());
+        if (dR < dR_max_L1matching) L1idx_dR.push_back(std::make_pair(l1_idx, dR));
+        l1_idx++;
+      } // L1 muon loop
+    } else {
+      // propagate the muon to the muon system
+      TrajectoryStateOnSurface prop_muon = matcher_.extrapolate(off_muon);
+      if (!prop_muon.isValid()) continue;
+    
+      // loop on L1 muons
+      for (auto L1_mu_it = L1_muons->begin(0); L1_mu_it != L1_muons->end(0); ++L1_mu_it){
+        double dR = reco::deltaR(prop_muon.globalPosition().eta(), prop_muon.globalPosition().phi(), L1_mu_it->eta(), L1_mu_it->phi() + deltaPhi_offset);
+        if (dR < dR_max_L1matching) L1idx_dR.push_back(std::make_pair(l1_idx, dR));
+        l1_idx++;
+      }
     }
     // sort L1 muons by dR
     std::sort(L1idx_dR.begin(), L1idx_dR.end(), [](const std::pair<int,double>& a, const std::pair<int,double>& b) { return a.second < b.second; });
@@ -685,12 +688,15 @@ void MuMu_demo::L1matching(const edm::Event& iEvent){
     L1_muons_closest[i] = L1idx_dR;
 
   }// loop on offline muons
+  
   // match L1 and offline muons
   L1_muons_matched.resize(offline_muons->size(), -1);
   for (size_t i = 0; i<offline_muons->size(); ++i){
     for (size_t j = 0; j<L1_muons_closest[i].size(); ++j){
+      
       if (L1_muons_closest[i][j].second > dR_max_L1matching) continue;
       if (std::find(L1_muons_matched.begin(), L1_muons_matched.end(), L1_muons_closest[i][j].first) != L1_muons_matched.end()) continue;
+      
       L1_muons_matched[i] = L1_muons_closest[i][j].first;
       break;
     }
@@ -703,6 +709,76 @@ void MuMu_demo::L1matching(const edm::Event& iEvent){
   }
 
 }// L1matching()
+
+
+void MuMu_demo::L1matching_fix(const edm::Event& iEvent, const bool& L1atVtx){
+
+  // offline muons
+  edm::Handle<edm::View<pat::Muon>> offline_muons;
+  iEvent.getByToken(muon_Label, offline_muons);
+  // L1 muons
+  edm::Handle<BXVector<l1t::Muon> > L1_muons;
+  iEvent.getByToken(l1MuonsToken_, L1_muons);
+
+  const double deltaPhi_offset = 1.25 * M_PI/180.; //FIXME: hardcoded value
+  const double dR_max_L1matching = 1.0; //FIXME: hardcoded value
+  offline_closest.resize(L1_muons->size());
+  
+  // loop on L1 muons
+  int l1_idx = 0;
+  for (auto L1_mu_it = L1_muons->begin(0); L1_mu_it != L1_muons->end(0); ++L1_mu_it){
+    std::vector<std::pair<int,double>> muidx_dR;
+    for (size_t i = 0; i < offline_muons->size(); ++i){
+      const pat::Muon& off_muon = offline_muons->at(i);
+      double dR = 1000.;
+      if (L1atVtx){
+        dR = reco::deltaR(off_muon.eta(), off_muon.phi(), L1_mu_it->etaAtVtx(), L1_mu_it->phiAtVtx());
+      }else{
+        // propagate the muon to the muon system
+        TrajectoryStateOnSurface prop_muon = matcher_.extrapolate(off_muon);
+        //if (!prop_muon.isValid()) continue;
+        dR = ( prop_muon.isValid() ?  reco::deltaR(prop_muon.globalPosition().eta(), prop_muon.globalPosition().phi(), L1_mu_it->eta(), L1_mu_it->phi() + deltaPhi_offset) : 1000);
+      }
+      muidx_dR.push_back(std::make_pair(i, dR));
+        
+    }// loop on offline muons
+    
+    // sort offline muons by dR
+    std::sort(muidx_dR.begin(), muidx_dR.end(), [](const std::pair<int,double>& a, const std::pair<int,double>& b) { return a.second < b.second; });
+
+    if(debug_){
+      std::cout << "L1 muon " << l1_idx << std::endl;
+      for (const auto& mu : muidx_dR) std::cout << " - offline muon " << mu.first << " dR = " << mu.second << std::endl;
+    }
+    offline_closest[l1_idx] = muidx_dR;
+
+    l1_idx++;
+  }// loop on L1 muons
+
+  offline_matched.resize(L1_muons->size(), -1); // [N_L1] - index of the matched offline muon
+  L1_muons_matched.resize(offline_muons->size(), -1); // [N_offline] - index of the matched L1 muon for each offline muon
+  for (size_t i = 0; i<L1_muons->size(); ++i){
+    for (size_t j = 0; j<offline_closest[i].size(); ++j){
+      if (debug_) std::cout << "L1 " << i << " closest muon " << offline_closest[i][j].first << " dR = " << offline_closest[i][j].second << std::endl;
+      if (offline_closest[i][j].second > dR_max_L1matching) continue;
+      // check if the offline muon is already matched
+      if (std::find(offline_matched.begin(), offline_matched.end(), offline_closest[i][j].first) != offline_matched.end()) {
+        if (debug_) std::cout << "Offline muon " << offline_closest[i][j].first << " already matched" << std::endl;
+        continue;
+      }
+      L1_muons_matched[offline_closest[i][j].first] = i;
+      offline_matched[i] = offline_closest[i][j].first;
+      break;
+    }// loop on offline muons
+  }// loop on L1 muons
+  // print results
+  if(debug_){
+    for (size_t i = 0; i < offline_muons->size(); ++i){
+      std::cout << "Offline muon " << i << " matched to L1 muon " << L1_muons_matched[i] << std::endl;
+    }
+  }
+
+}// L1matching_fix()
 
 bool MuMu_demo::buildMuMu(const reco::TransientTrack& ttrack1, const reco::TransientTrack& ttrack2, reco::Vertex& vertex, reco::BeamSpot& vertexBeamSpot){
   
@@ -867,22 +943,24 @@ void MuMu_demo::beginJob()
   std::cout << "Beginning analyzer job with value of isMC= " << isMC_ << std::endl;
 
   edm::Service<TFileService> fs;
-  tree_        = fs->make<TTree>("ntuple",        "LowMass Dimuons ntuple");
-  tree_muons   = fs->make<TTree>("ntuple_muons",  "muons ntuple");
-  tree_L1muons = fs->make<TTree>("ntuple_L1muons","L1muons ntuple");
-  tree_L2muons = fs->make<TTree>("ntuple_L2muons","L2muons ntuple");
-  tree_L3muons = fs->make<TTree>("ntuple_L3muons","L3muons ntuple");
+  tree_          = fs->make<TTree>("ntuple",        "LowMass Dimuons ntuple");
+  //tree_muons   = fs->make<TTree>("ntuple_muons",  "muons ntuple");
+  //tree_L1muons = fs->make<TTree>("ntuple_L1muons","L1muons ntuple");
+  //tree_L2muons = fs->make<TTree>("ntuple_L2muons","L2muons ntuple");
+  //tree_L3muons = fs->make<TTree>("ntuple_L3muons","L3muons ntuple");
 
 
-  tree_->Branch("nB",&nB,"nB/i");
+  tree_->Branch("run",      &run,       "run/I");
+  tree_->Branch("event",    &event,     "event/L");
+  tree_->Branch("lumiblock",&lumiblock,"lumiblock/I");
   tree_->Branch("nMu",&nMu,"nMu/i");
-
-  //tree_->Branch("B_charge", &B_charge);
   tree_->Branch("DiMu_mass", &DiMu_mass);
   tree_->Branch("DiMu_pt" , &DiMu_pt);
   tree_->Branch("DiMu_eta", &DiMu_eta);
   tree_->Branch("DiMu_phi", &DiMu_phi);
   tree_->Branch("DiMu_dR", &DiMu_dR);
+  tree_->Branch("DiMu_mu1trk2_dR", &DiMu_mu1trk2_dR);
+  tree_->Branch("DiMu_mu2trk1_dR", &DiMu_mu2trk1_dR);
   tree_->Branch("DiMu_dz", &DiMu_dz);
 
   tree_->Branch("DiMu_mu1_index",  &DiMu_mu1_index);
@@ -941,6 +1019,8 @@ void MuMu_demo::beginJob()
 
   tree_->Branch("L1_mu1_dR", &L1_mu1_dR);
   tree_->Branch("L1_mu2_dR", &L1_mu2_dR);
+  tree_->Branch("L1vtx_mu1_dR", &L1vtx_mu1_dR);
+  tree_->Branch("L1vtx_mu2_dR", &L1vtx_mu2_dR);
   tree_->Branch("dR_muon1_L2", &dR_muon1_L2);
   tree_->Branch("dR_muon2_L2", &dR_muon2_L2);
   tree_->Branch("dR_muon1_L3", &dR_muon1_L3);
@@ -958,25 +1038,23 @@ void MuMu_demo::beginJob()
   tree_->Branch("priVtxCL", &priVtxCL, "priVtxCL/D");
 
   tree_->Branch("nVtx",       &nVtx);
-  tree_->Branch("run",        &run,       "run/I");
-  tree_->Branch("event",        &event,     "event/L");
-  tree_->Branch("lumiblock",&lumiblock,"lumiblock/I");
 
-  tree_muons->Branch("run",      &run,       "run/I");
-  tree_muons->Branch("event",    &event,     "event/L");
-  tree_muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
 
-  tree_L1muons->Branch("run",      &run,       "run/I");
-  tree_L1muons->Branch("event",    &event,     "event/L");
-  tree_L1muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
+  //tree_muons->Branch("run",      &run,       "run/I");
+  //tree_muons->Branch("event",    &event,     "event/L");
+  //tree_muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
 
-  tree_L2muons->Branch("run",      &run,       "run/I");
-  tree_L2muons->Branch("event",    &event,     "event/L");
-  tree_L2muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
+  //tree_L1muons->Branch("run",      &run,       "run/I");
+  //tree_L1muons->Branch("event",    &event,     "event/L");
+  //tree_L1muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
 
-  tree_L3muons->Branch("run",      &run,       "run/I");
-  tree_L3muons->Branch("event",    &event,     "event/L");
-  tree_L3muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
+  //tree_L2muons->Branch("run",      &run,       "run/I");
+  //tree_L2muons->Branch("event",    &event,     "event/L");
+  //tree_L2muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
+
+  //tree_L3muons->Branch("run",      &run,       "run/I");
+  //tree_L3muons->Branch("event",    &event,     "event/L");
+  //tree_L3muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
     
   // *************************
  
@@ -1009,6 +1087,7 @@ void MuMu_demo::beginJob()
 
   tree_->Branch("mu1_L1_match", &mu1_L1_match);
   tree_->Branch("mu1_L1_idx", &mu1_L1_idx);
+  tree_->Branch("mu1_isPropagated", &mu1_isPropagated);
   tree_->Branch("mu1_prop_pt", &mu1_prop_pt);
   tree_->Branch("mu1_prop_eta", &mu1_prop_eta);
   tree_->Branch("mu1_prop_phi", &mu1_prop_phi);
@@ -1019,6 +1098,7 @@ void MuMu_demo::beginJob()
 
   tree_->Branch("mu2_L1_match", &mu2_L1_match);
   tree_->Branch("mu2_L1_idx", &mu2_L1_idx);
+  tree_->Branch("mu2_isPropagated", &mu2_isPropagated);
   tree_->Branch("mu2_prop_pt", &mu2_prop_pt);
   tree_->Branch("mu2_prop_eta", &mu2_prop_eta);
   tree_->Branch("mu2_prop_phi", &mu2_prop_phi);
@@ -1030,26 +1110,26 @@ void MuMu_demo::beginJob()
   tree_->Branch("mumuL2_dr",&mumuL2_dr);
   tree_->Branch("mumuL3_dr",&mumuL3_dr);
 
-  tree_L1muons->Branch("L1mu_pt", &L1mu_pt); 
-  tree_L1muons->Branch("L1mu_eta", &L1mu_eta);
-  tree_L1muons->Branch("L1mu_phi", &L1mu_phi);
-  tree_L1muons->Branch("L1mu_etaAtVtx", &L1mu_etaAtVtx);
-  tree_L1muons->Branch("L1mu_phiAtVtx", &L1mu_phiAtVtx);
-  tree_L1muons->Branch("L1mu_charge", &L1mu_charge);
-  tree_L1muons->Branch("L1mu_quality", &L1mu_quality);
+  //tree_L1muons->Branch("L1mu_pt", &L1mu_pt); 
+  //tree_L1muons->Branch("L1mu_eta", &L1mu_eta);
+  //tree_L1muons->Branch("L1mu_phi", &L1mu_phi);
+  //tree_L1muons->Branch("L1mu_etaAtVtx", &L1mu_etaAtVtx);
+  //tree_L1muons->Branch("L1mu_phiAtVtx", &L1mu_phiAtVtx);
+  //tree_L1muons->Branch("L1mu_charge", &L1mu_charge);
+  //tree_L1muons->Branch("L1mu_quality", &L1mu_quality);
 
-  tree_muons->Branch("mu_pt", &mu_pt); 
-  tree_muons->Branch("mu_eta", &mu_eta);
-  tree_muons->Branch("mu_phi", &mu_phi);
-  tree_muons->Branch("mu_charge", &mu_charge);
+  //tree_muons->Branch("mu_pt", &mu_pt); 
+  //tree_muons->Branch("mu_eta", &mu_eta);
+  //tree_muons->Branch("mu_phi", &mu_phi);
+  //tree_muons->Branch("mu_charge", &mu_charge);
   
-  tree_L2muons->Branch("L2mu_pt", &L2mu_pt); 
-  tree_L2muons->Branch("L2mu_eta", &L2mu_eta);
-  tree_L2muons->Branch("L2mu_phi", &L2mu_phi);
+  //tree_L2muons->Branch("L2mu_pt", &L2mu_pt); 
+  //tree_L2muons->Branch("L2mu_eta", &L2mu_eta);
+  //tree_L2muons->Branch("L2mu_phi", &L2mu_phi);
   
-  tree_L3muons->Branch("L3mu_pt", &L3mu_pt); 
-  tree_L3muons->Branch("L3mu_eta", &L3mu_eta);
-  tree_L3muons->Branch("L3mu_phi", &L3mu_phi);
+  //tree_L3muons->Branch("L3mu_pt", &L3mu_pt); 
+  //tree_L3muons->Branch("L3mu_eta", &L3mu_eta);
+  //tree_L3muons->Branch("L3mu_phi", &L3mu_phi);
 
   tree_->Branch("mu1soft",&mu1soft);
   tree_->Branch("mu2soft",&mu2soft);
@@ -1066,17 +1146,17 @@ void MuMu_demo::beginJob()
 
   // gen
   if (isMC_ && false) { // FIXME : something not allocated
-     tree_gen_muons   = fs->make<TTree>("ntuple_gen_muons",  "gen muons ntuple");
-     tree_gen_muons->Branch("run",      &run,       "run/I");
-     tree_gen_muons->Branch("event",    &event,     "event/L");
-     tree_gen_muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
-     tree_gen_muons->Branch("GENmu_pt", &GENmu_pt);
-     tree_gen_muons->Branch("GENmu_eta", &GENmu_eta);
-     tree_gen_muons->Branch("GENmu_phi", &GENmu_phi);
-     tree_gen_muons->Branch("GENmu_charge", &GENmu_charge);
-     tree_gen_muons->Branch("GENmu_status", &GENmu_status);
-     tree_gen_muons->Branch("GENmu_mother", &GENmu_mother);
-     tree_gen_muons->Branch("GENmu_grandmother", &GENmu_grandmother);
+     //tree_gen_muons   = fs->make<TTree>("ntuple_gen_muons",  "gen muons ntuple");
+     //tree_gen_muons->Branch("run",      &run,       "run/I");
+     //tree_gen_muons->Branch("event",    &event,     "event/L");
+     //tree_gen_muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
+     //tree_gen_muons->Branch("GENmu_pt", &GENmu_pt);
+     //tree_gen_muons->Branch("GENmu_eta", &GENmu_eta);
+     //tree_gen_muons->Branch("GENmu_phi", &GENmu_phi);
+     //tree_gen_muons->Branch("GENmu_charge", &GENmu_charge);
+     //tree_gen_muons->Branch("GENmu_status", &GENmu_status);
+     //tree_gen_muons->Branch("GENmu_mother", &GENmu_mother);
+     //tree_gen_muons->Branch("GENmu_grandmother", &GENmu_grandmother);
 
      tree_->Branch("gen_bc_p4",     "TLorentzVector",  &gen_bc_p4);
      tree_->Branch("gen_jpsi_p4",   "TLorentzVector",  &gen_jpsi_p4);
@@ -1112,9 +1192,10 @@ void MuMu_demo::reset_variables(){
   
   if (debug_) std::cout << " ---> reset_variables()" << std::endl;  
 
-  nB = 0; nMu = 0;
+  nMu = 0;
 
   DiMu_dR = 0;
+  DiMu_mu1trk2_dR = 0; DiMu_mu2trk1_dR = 0;
   DiMu_dz = 0; 
   DiMu_mass = 0; DiMu_mass_err = 0;
   DiMu_pt = 0;  DiMu_eta = 0;  DiMu_phi = 0;
@@ -1157,10 +1238,12 @@ void MuMu_demo::reset_variables(){
 
 
   mu1_L1_match = 0; mu1_L1_idx = -1;
-  mu1_prop_pt = -1; mu1_prop_eta = -1; mu1_prop_phi = -1; 
+  mu1_isPropagated = 0;
+  mu1_prop_pt = -1; mu1_prop_eta = -99; mu1_prop_phi = -99; 
   mu1_L1prop_dR = -1;
   mu2_L1_match = 0; mu2_L1_idx = -1;
-  mu2_prop_pt = -1; mu2_prop_eta = -1; mu2_prop_phi = -1;
+  mu2_isPropagated = 0;
+  mu2_prop_pt = -1; mu2_prop_eta = -99; mu2_prop_phi = -99;
   mu2_L1prop_dR = -1;
   mu1_L2_match = 0;
   mu2_L2_match = 0;
@@ -1170,6 +1253,8 @@ void MuMu_demo::reset_variables(){
 
   L1_mu1_dR = -1;
   L1_mu2_dR = -1;
+  L1vtx_mu1_dR = -1;
+  L1vtx_mu2_dR = -1;
   dR_muon1_L2 = -1;
   dR_muon2_L2 = -1;
   dR_muon1_L3 = -1;
@@ -1182,6 +1267,7 @@ void MuMu_demo::reset_variables(){
   GENmu_pt.clear(); GENmu_eta.clear(); GENmu_phi.clear();
 
   L1_muons_matched.clear(); L1_muons_closest.clear();
+  offline_matched.clear(); offline_closest.clear();
   L1mu_etaAtVtx.clear(); L1mu_phiAtVtx.clear();
   L1mu_quality.clear(); L1mu_charge.clear();
 

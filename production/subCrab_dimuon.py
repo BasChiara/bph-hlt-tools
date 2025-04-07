@@ -14,7 +14,7 @@ from http.client import HTTPException #python3
 #from CRABClient.UserUtilities import config
 
 
-_ProductionTag = '_SFtestL1fix'
+_ProductionTag = '_pTbias'
 def getOptions():
     """
     Parse and return the arguments provided by the user.

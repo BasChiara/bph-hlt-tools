@@ -124,7 +124,8 @@ public:
   bool   TriggerCheck(const std::vector<int>& trigger_bits);
   void   L1results(const edm::Event& iEvent, const edm::EventSetup& iSetup);
   void   HLTresults(const edm::Event& iEvent);
-  void   L1matching(const edm::Event& iEvent);
+  void   L1matching(const edm::Event& iEvent, const bool& L1atVtx = false);
+  void   L1matching_fix(const edm::Event& iEvent, const bool& L1atVtx = false);
 
   // MuMu candidates
   bool buildMuMu(const reco::TransientTrack& ttrack1, const reco::TransientTrack& ttrack2, reco::Vertex& vertex, reco::BeamSpot& vertexBeamSpot);
@@ -197,9 +198,6 @@ private:
   ParticleMass MUON_MASS_ = 0.10565837;
   float MUON_SIGMA_ = MUON_MASS_*1.e-6;
 
-  
-
-
 
   // *********** TREE VARIABLES ************
   TTree*      tree_;
@@ -208,11 +206,13 @@ private:
   TTree*      tree_L1muons;
   TTree*      tree_L2muons;
   TTree*      tree_L3muons;
-  
+
+  // ---- muons ----
   int         mu1_charge, mu2_charge;
   int         mu1_GEN_match, mu2_GEN_match;
   int         mu1_L1_match, mu2_L1_match;
   int         mu1_L1_idx, mu2_L1_idx;
+  int         mu1_isPropagated, mu2_isPropagated;
   Double_t    mu1_prop_pt, mu2_prop_pt;
   Double_t    mu1_prop_eta, mu2_prop_eta;
   Double_t    mu1_prop_phi, mu2_prop_phi;
@@ -238,7 +238,9 @@ private:
   std::vector<float> L1mu_pt, L1mu_eta, L1mu_phi, L1mu_etaAtVtx, L1mu_phiAtVtx, L1mu_charge, L1mu_quality;
   // my L1 matching
   std::vector<std::vector<std::pair<int,double>>> L1_muons_closest;
-  std::vector<int> L1_muons_matched;
+  std::vector<std::vector<std::pair<int,double>>> offline_closest;
+  std::vector<int> L1_muons_matched, offline_matched;
+
   
   std::vector<float> mu_pt, mu_eta, mu_phi, mu_charge;
   std::vector<float> L2mu_pt, L2mu_eta, L2mu_phi;
@@ -254,10 +256,10 @@ private:
 
  
   // *************************************
-  unsigned int    nB;
   unsigned int    nMu;
     
   Double_t DiMu_dR;
+  Double_t DiMu_mu1trk2_dR, DiMu_mu2trk1_dR; // dR between mu_i and muon-track_j
   Double_t DiMu_dz;
   Double_t DiMu_mass,DiMu_mass_err;
   Double_t DiMu_pt, DiMu_eta, DiMu_phi;
@@ -283,11 +285,12 @@ private:
   Double_t      DiMu_DecayVtxXE, DiMu_DecayVtxYE, DiMu_DecayVtxZE;
   Double_t      DiMu_DecayVtxXYE, DiMu_DecayVtxXZE, DiMu_DecayVtxYZE;
   Double_t      lxy, lxyerr;
-  Double_t      lxy_pv, lxy_pv_err;
-  Double_t      lxy_hlt, lxyerr_hlt;
+  Double_t      lxy_pv,   lxy_pv_err;
+  Double_t      lxy_hlt,  lxyerr_hlt;
   Double_t      cosAlpha, cosAlpha_hlt;
 
-  Double_t      L1_mu1_dR, L1_mu2_dR;
+  Double_t      L1_mu1_dR,   L1_mu2_dR;
+  Double_t      L1vtx_mu1_dR,   L1vtx_mu2_dR;
   Double_t      dR_muon1_L2, dR_muon2_L2;
   Double_t      dR_muon1_L3, dR_muon2_L3;
 

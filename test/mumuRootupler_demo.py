@@ -85,10 +85,11 @@ process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 # Global tag and input file
 GlobalTag_dict = {
-    '2022preEE' : '130X_mcRun3_2022_realistic_v5',
-    '2023BPix' : '130X_mcRun3_2023_realistic_postBPix_v2',
-    '2024G' : '140X_dataRun3_Prompt_v4',
-    '2024I' : '140X_dataRun3_Prompt_v4',
+    '2022preEE'   : '130X_mcRun3_2022_realistic_v5',
+    '2023preBPix' : '130X_mcRun3_2023_realistic_v14',
+    '2023BPix'    : '130X_mcRun3_2023_realistic_postBPix_v2',
+    '2024G'       : '140X_dataRun3_Prompt_v4',
+    '2024I'       : '140X_dataRun3_Prompt_v4',
 }
 
 data_file_dict = {
@@ -103,6 +104,8 @@ mc_file_dict = {
     'default': '',
     '2022EE' : '',
     '2022preEE' : '/store/mc/Run3Summer22MiniAODv4/InclusiveDileptonMinBias_TuneCP5Plus_13p6TeV_pythia8/MINIAODSIM/validDigi_130X_mcRun3_2022_realistic_v5-v4/2820000/37b0bc85-0086-469f-aee3-7ed5506d86b1.root',
+    '2023preBPix' :[ '/store/mc/Run3Summer23MiniAODv4/Jpsito2Mu_JpsiPT8_TuneCP5_13p6TeV_pythia8/MINIAODSIM/MUO_POG_130X_mcRun3_2023_realistic_v14-v2/2520000/0c863e61-da9e-4b99-8a7b-2c0c6a3bc454.root',
+                    '/store/mc/Run3Summer23MiniAODv4/Jpsito2Mu_JpsiPT8_TuneCP5_13p6TeV_pythia8/MINIAODSIM/MUO_POG_130X_mcRun3_2023_realistic_v14-v2/2520000/0ced0770-fbf6-4221-81ef-8c85715268a4.root'],
     '2023BPix'  : '/store/mc/Run3Summer23MiniAODv4/Jpsito2Mu_JpsiPT8_TuneCP5_13p6TeV_pythia8/MINIAODSIM/MUO_POG_130X_mcRun3_2023_realistic_v14-v2/2520000/0c863e61-da9e-4b99-8a7b-2c0c6a3bc454.root',
 }
 
@@ -115,14 +118,6 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.options.allowUnscheduled = cms.untracked.bool(True)
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxE))
-
-#data_file = '/store/data/Run2023C/ParkingDoubleMuonLowMass7/MINIAOD/PromptReco-v4/000/367/770/00000/0c62c10b-6629-4caf-9f6f-ed6c0bbc65b0.root'
-#data_file = "/store/data/Run2023C/Muon0/MINIAOD/PromptReco-v4/000/367/770/00000/2c7a455b-304f-4ece-b66a-dabf30e9c7b1.root"
-#data_file = "/store/data/Run2023D/Muon1/MINIAOD/PromptReco-v2/000/370/776/00000/a92b94e8-1455-4a5d-b4c9-323e43d486f9.root"
-#data_file = "/store/data/Run2022F/Muon/MINIAOD/PromptReco-v1/000/360/389/00000/ad0997b9-ff20-4b2c-9c51-1d6ef49100f4.root"
-#data_file = "/store/data/Run2022F/Muon/MINIAOD/PromptReco-v1/000/360/335/00000/db3a7d95-2b78-4e72-86e4-8436005406bf.root"
-#data_file  = "/store/data/Run2022F/Muon/MINIAOD/PromptReco-v1/000/360/390/00000/be5c66b6-fea2-48f4-879f-846f6de0e511.root"
-#data_file   = "/store/data/Run2023C/Muon0/MINIAOD/PromptReco-v2/000/367/516/00000/042f54de-04d7-4823-bd01-1926572db8fe.root"
 
 
 data_file = mc_file_dict[options.period] if options.isMC else data_file_dict[options.period]
