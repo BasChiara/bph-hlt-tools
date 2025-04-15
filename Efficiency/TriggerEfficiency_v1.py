@@ -20,27 +20,6 @@ plot_eff2D = False
 plt.style.use(hep.style.CMS)
 
 
-extra_cuts = dict(
-    muProbe_pt = ['abs(muProbe_eta)<1.5', 
-                  'abs(muProbe_eta)>1.5', 
-                  '0<abs(muProbe_eta)<0.9', 
-                  '0.9<abs(muProbe_eta)<1.2', 
-                  '1.2<abs(muProbe_eta)<2.4'],
-    muProbe_eta = [
-                'muProbe_pt>4',
-                'muProbe_pt>6',
-                'muProbe_pt>8',
-    ],
-
-    muProbe_phi = [
-                'muProbe_pt>6',
-                'muProbe_pt>6 & abs(muProbe_eta)>1.5',
-                'muProbe_pt>8',
-                'muProbe_pt>8 & abs(muProbe_eta)>1.5',
-    ]
-)
-extra_cuts = dict()
-
 if __name__== '__main__':
 
     parser = argparse.ArgumentParser(description="Trigger efficiency calculation script")
@@ -79,13 +58,15 @@ if __name__== '__main__':
     else:
         denQuery = args.denQ if args.denQ else cfg.default_tagQuery        
         numQuery = args.numQ if args.numQ else cfg.default_probeQuery
+    
+    denQuery = denQuery + f' & (muTag_{tagPath}==1)'
 
     arrays = ['DiMu_mass', 'DiMu_Prob', 'dz_muons' , 'event', '*HLT_*' , 'mu*match', '*lxy*', '*charge*', 'L1*', '*dR*'] 
     arrays+= 'muProbe_pt,muProbe_eta,muProbe_phi,muTag_pt,muTag_eta,muTag_phi'.split(',')
     arrays+= 'L3_muProbe_pt,L3_muProbe_eta,L3_muProbe_phi,L3_muTag_pt,L3_muTag_eta,L3_muTag_phi'.split(',')
 
 
-    outputdir = os.path.join('Run'+run, Name)
+    outputdir = os.path.join('results', run, Name)
     os.makedirs(outputdir, exist_ok=True)
     file = uproot.open(input_file)
     data_np = file[tagPath].arrays( library="np")
@@ -139,25 +120,10 @@ if __name__== '__main__':
             ax2.legend()
 
         out_name = f'{outputdir}/Tag{tagPath}_Probe{probePath}_{var1}.pdf'
-        plt.savefig(f'{outputdir}/Tag{tagPath}_Probe{probePath}_{var1}.pdf', bbox_inches='tight')
+        plt.savefig(out_name, bbox_inches='tight')
         plt.close()
         print(f' [INFO] saved plot in {out_name}')
-        
-        if var1 in extra_cuts:
-            for indx, extra in enumerate(extra_cuts[var1]):
-                denQuery_extra = denQuery+' and '+extra
-                utils.get_and_store(
-                    data=data, 
-                    var=var1,
-                    denQuery=denQuery_extra,
-                    numQuery=numQuery, 
-                    tagPath=tagPath, 
-                    probePath=probePath, 
-                    Bins1d = cfg.Bins1d,
-                    input_file=input_file,
-                    outputdir=outputdir,
-                    v_name=f'v{indx}')
-        
+        exit()
         if not plot_eff2D: continue
         for var2 in cfg.variables:            
             

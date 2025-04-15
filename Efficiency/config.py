@@ -19,6 +19,7 @@ pretty_name=dict(
 )
 
 variables = ['muProbe_pt', 'muProbe_eta', 'DiMu_mass', 'muProbe_phi', 'DiMu_dR', 'lxySig']
+variables = ['muProbe_pt']
 
 default_tagQuery = ' & '.join([
         "(2.9<DiMu_mass<3.3)",

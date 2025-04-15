@@ -52,19 +52,24 @@ class npEncoder(json.JSONEncoder):
         return super(npEncoder, self).default(obj)
 
 def passfail_histo(data, var, denQuery, numQuery, probePath, Bins1d, norm=False):
-
+    print(' -> passfail_histo()')
+    print(f' \t TAG sel: {denQuery}')
     h_all      = np.histogram(data.query(denQuery)[var], bins=Bins1d[var], density=norm)
     ccomplete_numQuery = denQuery
     if numQuery:
         ccomplete_numQuery += " & "+numQuery 
-    ccomplete_numQuery+= f' & muProbe_{probePath}==1'
+    ccomplete_numQuery+= f' & (muProbe_{probePath}==1)'
+    print(f' \t PROBE sel: {ccomplete_numQuery}')
     h_passprob = np.histogram(data.query(ccomplete_numQuery)[var], bins=Bins1d[var], density=norm) 
 
     return h_all, h_passprob
 
 def get_and_store(data, var, denQuery, numQuery, tagPath, probePath, Bins1d, input_file, outputdir, v_name=''):
-        
-    h_all, h_passprob = passfail_histo(data, var, denQuery, numQuery, probePath, Bins1d)     
+    
+    print(' -> get_and_store()')
+    print(f' \t TAG sel: {denQuery}')
+    print(f' \t PROBE sel: {numQuery}')
+    h_all, h_passprob = passfail_histo(data, var, denQuery, numQuery, probePath, Bins1d)   
     ratio = h_passprob[0]/h_all[0]
     err  = clopper_pearson(h_passprob[0], h_all[0])
 

@@ -27,7 +27,8 @@ def create_dict_from_df_destructive(dataframe, destructive=True):
         else:
             if 'HLT' in var: dict_df[var] = np.array(dataframe[var], dtype=np.int8)
             if 'L1' in var: dict_df[var] = np.array(dataframe[var], dtype=np.int8)
-            if var in ['run', 'lumiblock', 'luminosityBlock', 'event', 'subentry', 'nB', 'nMu', 'nVtx']:
+            if var in ['run', 'lumiblock', 'luminosityBlock', 'event', 'subentry', 'nMu', 'nVtx']:
+                print(f'Converting {var} to int64')
                 dict_df[var] = np.array(dataframe[var], dtype=np.int64)
             else: dict_df[var] = np.array(dataframe[var])
         if destructive: dataframe.drop(var, axis=1, inplace=True)
@@ -53,7 +54,13 @@ def save_df_to_root(dataframe, output_file, tree):
     save_dict_to_root(dictionary, output_file, tree)
 
 
-
+def drop_duplicates(df):
+    duplicated_columns = df.columns[df.columns.duplicated()]
+    if duplicated_columns.size > 0:
+        print(f'Dropping duplicated columns: {duplicated_columns}')
+        df = df.loc[:,~df.columns.duplicated()]
+    df = df.loc[:,~df.columns.duplicated()]
+    return df
 
 
 import argparse
@@ -122,6 +129,7 @@ if args.dryrun:
     exit()
 
 dataTag = list()
+N_tnp_expected = 0
 for indx, fn in enumerate(files):
     print(fn, end='')
     try:
@@ -136,32 +144,47 @@ for indx, fn in enumerate(files):
     file.close()
     
     print('[+] data Loaded')
-    muonFiringTag = data.filter(regex=f'mu.*{tagPath}').sum(axis=1)>0 # mask : at least one muon fired the tagHLT
+    muonFiringTag = data.filter(regex=f'mu.*{tagPath}').sum(axis=1)>0 # mask : the tag fired the tagHLT 
     dataTag_ = data.loc[muonFiringTag]
     #dataTag_.set_index('event', inplace=True)
-    print(f' {dataTag_.sum(axis=1)} t&p pairs')
+    print(dataTag_.shape)
+    N_tnp = dataTag_.shape[0]
+    print(f' {dataTag_.shape[0]} t&p pairs')
+    N_tnp_expected += N_tnp
 
-    # rename 'mu1' -> muTag, 'mu2' -> muProbe 
-    dataTag_leadingTag  = (dataTag_.loc[dataTag_[f'mu1_{tagPath}']==1]).copy()
-    dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu1', 'muTag'), axis=1, inplace=True)
-    dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu2', 'muProbe'), axis=1, inplace=True)
-    dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon1', 'muTag'), axis=1, inplace=True)
-    dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon2', 'muProbe'), axis=1, inplace=True)
-    # rename 'mu1' -> muTag, 'mu2' -> muProbe
-    dataTag_trailingTag = (dataTag_[dataTag_[f'mu2_{tagPath}']==1]).copy()
-    dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu2', 'muTag'), axis=1, inplace=True)
-    dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu1', 'muProbe'), axis=1, inplace=True)
-    dataTag_trailingTag.rename(mapper=lambda x: x.replace('muon2', 'muTag'), axis=1, inplace=True)
-    dataTag_trailingTag.rename(mapper=lambda x: x.replace('muon1', 'muProbe'), axis=1, inplace=True)    
+    dataTag_renamed = dataTag_.copy()
+    dataTag_renamed.rename(mapper=lambda x: x.replace('mu1', 'muTag'), axis=1, inplace=True)
+    dataTag_renamed.rename(mapper=lambda x: x.replace('mu2', 'muProbe'), axis=1, inplace=True)
+    dataTag_renamed.rename(mapper=lambda x: x.replace('muon1', 'muTag'), axis=1, inplace=True)
+    dataTag_renamed.rename(mapper=lambda x: x.replace('muon2', 'muProbe'), axis=1, inplace=True)
+
+    ## rename 'mu1' -> muTag, 'mu2' -> muProbe 
+    #dataTag_leadingTag  = (dataTag_.loc[dataTag_[f'mu1_{tagPath}']==1]).copy()
+    #dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu1', 'muTag'), axis=1, inplace=True)
+    #dataTag_leadingTag.rename(mapper=lambda x: x.replace('mu2', 'muProbe'), axis=1, inplace=True)
+    #dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon1', 'muTag'), axis=1, inplace=True)
+    #dataTag_leadingTag.rename(mapper=lambda x: x.replace('muon2', 'muProbe'), axis=1, inplace=True)
+    ## rename 'mu1' -> muTag, 'mu2' -> muProbe
+    #dataTag_trailingTag = (dataTag_[dataTag_[f'mu2_{tagPath}']==1]).copy()
+    #dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu2', 'muTag'), axis=1, inplace=True)
+    #dataTag_trailingTag.rename(mapper=lambda x: x.replace('mu1', 'muProbe'), axis=1, inplace=True)
+    #dataTag_trailingTag.rename(mapper=lambda x: x.replace('muon2', 'muTag'), axis=1, inplace=True)
+    #dataTag_trailingTag.rename(mapper=lambda x: x.replace('muon1', 'muProbe'), axis=1, inplace=True)    
 
     # concatenate the two datasets
-    _dataTag = pd.concat([dataTag_leadingTag, dataTag_trailingTag])
+    #_dataTag = pd.concat([dataTag_leadingTag, dataTag_trailingTag])
     
-    dataTag.append(_dataTag)
+    dataTag.append(dataTag_renamed)
+
 
 dataTag = pd.concat(dataTag)
 lxySig = dataTag['lxy'] / dataTag['lxyerr']
+dataTag = drop_duplicates(dataTag)
 dataTag = pd.concat([dataTag, lxySig.rename('lxySig')], axis=1)
+
+print(f'Expected number of t&p pairs: {N_tnp_expected}')
+print(f'Actual number of t&p pairs: {dataTag.shape[0]}')
+
 save_df_to_root(dataTag, output_file, tagPath)
 
 print('Total Bad Files: ', len(bad_files))
