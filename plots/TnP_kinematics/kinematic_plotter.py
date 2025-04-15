@@ -8,7 +8,7 @@ import os
 import sys
 
 bph_ntuples = {
-    "file" : "/eos/user/c/cbasile/HLT_DoubleMu/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/test/Rootuple_MC_DiMu-MiniAOD_2023preBPix.root",
+    "file" : "/eos/user/c/cbasile/HLT_DoubleMu/CMSSW_14_0_5/src/myAnalyzers/bph-hlt-tools/test/Rootuple_MC_DiMu-MiniAOD_2023preBPix_pTbias.root",
     "tree" : "rootuple/ntuple",
     "selection" : ' && '.join([
         '(DiMu_mass>2.9) & (DiMu_mass<3.3)',

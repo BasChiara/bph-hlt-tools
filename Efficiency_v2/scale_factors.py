@@ -18,20 +18,41 @@ argparser.add_argument('--output',
 argparser.add_argument('--verbose', action='store_true',
                         help='verbose output',
                         )
+argparser.add_argument('--probe_var',
+                        default='DiMu_mu2_pt',
+                        help='probe variable',
+                        )
+argparser.add_argument('--eta_region',
+                        default='cms',
+                        choices=['cms', 'barrel', 'overlap', 'endcap'],
+                        help='eta region',
+                        )
 args = argparser.parse_args()
 
-probe_var = 'DiMu_mu2_pt'
+
+probe_var = args.probe_var
 
 # load data
 print(f'[i] loading data from {args.data}')
 f_data = ROOT.TFile.Open(args.data)
-eff_data = f_data.Get(f'Hist_{probe_var}_efficiencyData')
+for e in f_data.GetListOfKeys():
+
+  if probe_var in e.GetName() and args.eta_region in e.GetName() and 'Hist' in e.GetName():
+    data_hist_name = e.GetName()
+    print(f'[i] found histogram: {data_hist_name}')
+    break
+eff_data = f_data.Get(data_hist_name)
 eff_data.SetDirectory(0)
 f_data.Close()
 # load mc
 print(f'[i] loading mc from {args.mc}')
 f_mc = ROOT.TFile.Open(args.mc)
-eff_mc = f_mc.Get(f'Hist_{probe_var}_efficiencyMC')
+for e in f_mc.GetListOfKeys():
+  if probe_var in e.GetName() and args.eta_region in e.GetName() and 'Hist' in e.GetName():
+    mc_hist_name = e.GetName()
+    print(f'[i] found histogram: {mc_hist_name}')
+    break
+eff_mc = f_mc.Get(mc_hist_name)
 eff_mc.SetDirectory(0)
 f_mc.Close()
 

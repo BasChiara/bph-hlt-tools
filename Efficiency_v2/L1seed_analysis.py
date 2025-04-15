@@ -68,7 +68,7 @@ for dataset in data_info['dataset']:
     data_files.extend(file_list)
 
 # root dataframe for data
-data_tag = ROOT.RDataFrame(data_info["tree"], data_files).Filter(tag_selection_)
+data_tag = ROOT.RDataFrame(data_info["tree"], data_files).Define("DiMu_mu2_aeta", "fabs(DiMu_mu2_eta)").Filter(tag_selection_)
 Nevents = data_tag.Count().GetValue()
 print(f'[i] #events after TAG selection: {Nevents}')
 
@@ -80,12 +80,12 @@ root_file = ROOT.TFile(out_file_name, 'RECREATE')
 for seed in config.L1_seeds:
     print(f'[i] processing seed: {seed}')
     # L1 seed selection
-    L1_selection = f'({seed} == 1)'
+    L1_selection = f'({seed} == 1) & DiMu_mu2_aeta > {config.eta_overlap[0]}'
     
     n_pass = data_tag.Filter(L1_selection).Count().GetValue()
     print(f' - events passing L1 seed: {n_pass/Nevents:.4f}')
     data_list.append({'L1_seed': seed, 'n_pass': n_pass, 'fraction': n_pass/Nevents})
-    L1_selection = f'({seed} == 0)'
+    
     if (n_pass/Nevents) < 0.1: continue
     # get efficiency curve
     print(f' - variable: {var}')

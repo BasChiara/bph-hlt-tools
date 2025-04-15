@@ -109,3 +109,25 @@ def style_efficiency(eff, x_label = '', title = '',color = ROOT.kBlack, marker =
     
 
     return eff
+
+def style_histogram(h, x_label = '', y_label = '', title = '', color = ROOT.kBlack, marker = None):
+
+    h.SetTitle(title)
+    if marker : 
+        h.SetMarkerStyle(marker)
+        h.SetMarkerColor(color)
+        h.SetMarkerSize(1.2)
+    h.SetLineColor(color)
+    h.SetLineWidth(2)
+    # x-axis
+    h.GetXaxis().SetTitle(x_label)
+    h.GetXaxis().SetTitleSize(0.05)
+    h.GetXaxis().SetTitleOffset(0.9)
+    h.GetXaxis().SetLabelSize(0.04)
+    # y-axis
+    h.GetYaxis().SetTitle(y_label)
+    h.GetYaxis().SetTitleSize(0.05)
+    h.GetYaxis().SetTitleOffset(0.9)
+    h.GetYaxis().SetLabelSize(0.04)
+
+    return h
