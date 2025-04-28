@@ -111,7 +111,7 @@ MuMu_demo::MuMu_demo(const edm::ParameterSet& iConfig)
   mu2_hltsVector(HLTPaths_.size()),
   DiMu_L1_dR(0), mumuL2_dr(0), mumuL3_dr(0),
  
-  mu1soft(0), mu2soft(0), mu1tight(0), mu2tight(0), 
+  mu1soft(0), mu2soft(0), mu1medium(0), mu2medium(0), mu1tight(0), mu2tight(0), 
   mu1PF(0), mu2PF(0), mu1loose(0), mu2loose(0),
   mu1Tracker(0), mu2Tracker(0), mu1Global(0), mu2Global(0),  
  
@@ -180,6 +180,11 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //*********************************
   // Get event content information
   //*********************************  
+
+  // Generated particles
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  iEvent.getByToken(genCands_, genParticles);
+  if (isMC_) GenMuonMatching(iEvent, iSetup); 
  
   // Kinematic fit
   edm::ESHandle<TransientTrackBuilder> theB = iSetup.getHandle(ttrkToken_);
@@ -189,14 +194,10 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   edm::Handle< View<pat::Muon> > thePATMuonHandle;
   iEvent.getByToken(muon_Label,thePATMuonHandle);
+  
   edm::Handle<edm::View<reco::Muon>> muonsView;
   iEvent.getByToken(muonsViewToken_, muonsView);
-
-  edm::Handle<reco::GenParticleCollection> pruned;
-  iEvent.getByToken(genCands_, pruned);
   
-  edm::Handle<pat::PackedGenParticleCollection> packed;
-  iEvent.getByToken(packedGenToken_,packed);
 
   // L1 info
   edm::Handle<pat::TriggerObjectStandAloneMatch> l1Matches;
@@ -397,6 +398,7 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         L1_mu1_pt  = L1mu.pt();
         L1_mu1_eta = L1mu.eta();
         L1_mu1_phi = L1mu.phi();
+        L1_mu1_quality = L1mu.hwQual();
         L1_mu1_dR    = reco::deltaR(muon1->eta(), muon1->phi(), L1mu.eta(), L1mu.phi());
         L1vtx_mu1_dR = reco::deltaR(muon1->eta(), muon1->phi(), L1mu.etaAtVtx(), L1mu.phiAtVtx());
         if (mu1_isPropagated) mu1_L1prop_dR = reco::deltaR(mu1_prop_eta, mu1_prop_phi, L1mu.eta(), L1mu.phi());
@@ -406,6 +408,7 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         L1_mu2_pt  = L1mu.pt();
         L1_mu2_eta = L1mu.eta();
         L1_mu2_phi = L1mu.phi();
+        L1_mu2_quality = L1mu.hwQual();
         L1_mu2_dR    = reco::deltaR(muon2->eta(), muon2->phi(), L1mu.eta(),      L1mu.phi());
         L1vtx_mu2_dR = reco::deltaR(muon2->eta(), muon2->phi(), L1mu.etaAtVtx(), L1mu.phiAtVtx());
         if (mu2_isPropagated) mu2_L1prop_dR = reco::deltaR(mu2_prop_eta, mu2_prop_phi, L1mu.eta(), L1mu.phi());
@@ -483,6 +486,27 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if (muon1->triggered((HLTPaths_[i]+"*").c_str())) mu1_hltsVector[i] = 1;
         if (muon2->triggered((HLTPaths_[i]+"*").c_str())) mu2_hltsVector[i] = 1;
       }
+
+      // GEN matching
+      if (isMC_ && !OnlyGen_) {
+        if (genMuons_match_idx[index_mu1] >= 0) {
+          const reco::Candidate &gen = (*genParticles)[genMuons_match_idx[index_mu1]];
+          mu1_gen_match = 1;
+          mu1_gen_pt  = gen.pt();
+          mu1_gen_eta = gen.eta();
+          mu1_gen_phi = gen.phi();
+          mu1_gen_dR  = reco::deltaR(iMuon1->eta(), iMuon1->phi(), mu1_gen_eta, mu1_gen_phi);
+        }
+        if (genMuons_match_idx[index_mu2] >= 0) {
+          const reco::Candidate &gen = (*genParticles)[genMuons_match_idx[index_mu2]];
+          mu2_gen_match = 1;
+          mu2_gen_pt  = gen.pt();
+          mu2_gen_eta = gen.eta();
+          mu2_gen_phi = gen.phi();
+          mu2_gen_dR  = reco::deltaR(iMuon2->eta(), iMuon2->phi(), mu2_gen_eta, mu2_gen_phi);
+        }
+        
+      }
       
       if (debug_) std::cout << " Muons IDs and properties " << std::endl;
       // ************ Different muons Id, and other properties  ****************
@@ -501,6 +525,8 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       mu1soft    = iMuon1->isSoftMuon(bestVtx) ;
       mu2soft    = iMuon2->isSoftMuon(bestVtx) ;
+      mu1medium  = iMuon1->isMediumMuon();
+      mu2medium  = iMuon2->isMediumMuon();
       mu1tight   = iMuon1->isTightMuon(bestVtx) ;
       mu2tight   = iMuon2->isTightMuon(bestVtx) ;
       mu1PF = iMuon1->isPFMuon();
@@ -906,13 +932,84 @@ bool MuMu_demo::buildMuMu(const reco::TransientTrack& ttrack1, const reco::Trans
 
   muonParticles.clear();
   return true;
+} // buildMuMu()
+
+// ----------- GEN INFO ----------------
+void MuMu_demo::GetGenInfo(const edm::Event& iEvent, const edm::EventSetup& iSetup){
+  if(debug_) std::cout<< "---> GetGenInfo()" << std::endl;
+  // get the gen particles
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  iEvent.getByToken(genCands_, genParticles);
+  if (!genParticles.isValid()) {
+    std::cout << "Error! Can't get the gen particles" << std::endl;
+    return;
+  }
+  gen_jpsi_p4.SetPxPyPzE(0.,0.,0.,0.);
+  gen_muon1_p4.SetPxPyPzE(0.,0.,0.,0.);
+  gen_muon2_p4.SetPxPyPzE(0.,0.,0.,0.);
+
+  // look for Jpsi -> mu+ mu-
+  for (size_t i = 0; i < genParticles->size(); ++i) {
+    const reco::Candidate &gen = (*genParticles)[i];
+    
+    if (!(gen.status() == 2 && abs(gen.pdgId()) == Jpsi_PDGid_)) continue;
+    for (size_t k=0; k<gen.numberOfDaughters(); k++) {
+      const reco::Candidate* dau = gen.daughter(k);
+      if (fabs(dau->pdgId()) == muon_PDGid_){
+        genJpsi_idx.push_back(i);
+        if (debug_) std::cout << "Gen Jpsi->MuMu " << dau->pdgId() << " " << dau->pt() << " " << dau->eta() << " " << dau->phi() << std::endl;
+      }
+    }
+  }
+}// GetGenInfo()
+
+void MuMu_demo::GenMuonMatching(const edm::Event& iEvent, const edm::EventSetup& iSetup){
+  if (debug_) std::cout<< "---> GenMuonMatching()" << std::endl;
+  // get the gen particles
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  iEvent.getByToken(genCands_, genParticles);
+  if (!genParticles.isValid()) {
+    std::cout << "Error! Can't get the gen particles" << std::endl;
+    return;
+  }
+  // get the muons
+  edm::Handle<edm::View<pat::Muon>> offline_muons;
+  iEvent.getByToken(muon_Label, offline_muons);
+  if (!offline_muons.isValid()) {
+    std::cout << "Error! Can't get the muons" << std::endl;
+    return;
+  }
+  genMuons_match_idx.resize(offline_muons->size(), -1);
+  // loop on gen particles
+  //for (size_t i = 0; i < genJpsi_idx.size(); ++i) {
+  for (size_t i = 0; i < genParticles->size(); ++i) {
+    const reco::Candidate &gen = (*genParticles)[i];
+
+    if (!(gen.status() == 1 && abs(gen.pdgId()) == muon_PDGid_)) continue;
+    
+    if (debug_) std::cout << "Gen muon: " << gen.pdgId() << " " << gen.pt() << " " << gen.eta() << " " << gen.phi() << std::endl;
+    // loop on offline muons
+    for (size_t j = 0; j < offline_muons->size(); ++j) {
+      const pat::Muon& off_muon = offline_muons->at(j);
+      if (IsTheSame(gen, off_muon, 0.01)){
+        genMuons_match_idx[j] =  i;
+      }
+    }
+  }
+  if (debug_) {
+    for (size_t i = 0; i < offline_muons->size(); ++i) {
+      std::cout << "Offline muon " << i << " matched to gen muon " << genMuons_match_idx[i] << std::endl;
+    }
+  }
 }
 
-bool MuMu_demo::IsTheSame(const pat::GenericParticle& tk, const pat::Muon& mu){
-  double DeltaEta = fabs(mu.eta()-tk.eta());
-  double DeltaP   = fabs(mu.p()-tk.p());
-  if (DeltaEta < 0.02 && DeltaP < 0.02) return true;
-  return false;
+bool MuMu_demo::IsTheSame(const pat::GenericParticle& tk, const pat::Muon& mu, const double& dR_MAX){
+  //double DeltaEta = fabs(mu.eta()-tk.eta());
+  //double DeltaP   = fabs(mu.p()-tk.p());
+  return reco::deltaR(mu.eta(), mu.phi(), tk.eta(), tk.phi()) < dR_MAX;
+  //if (DeltaEta < 0.02 && DeltaP < 0.02) return true;
+
+  //return false;
 }
 
 bool MuMu_demo::isAncestor(const reco::Candidate* ancestor, const reco::Candidate * particle) {
@@ -979,10 +1076,12 @@ void MuMu_demo::beginJob()
   tree_->Branch("L1_mu1_pt",  &L1_mu1_pt);
   tree_->Branch("L1_mu1_eta", &L1_mu1_eta);
   tree_->Branch("L1_mu1_phi", &L1_mu1_phi);
+  tree_->Branch("L1_mu1_quality", &L1_mu1_quality);
   
   tree_->Branch("L1_mu2_pt",  &L1_mu2_pt);
   tree_->Branch("L1_mu2_eta", &L1_mu2_eta);
   tree_->Branch("L1_mu2_phi", &L1_mu2_phi);
+  tree_->Branch("L1_mu2_quality", &L1_mu2_quality);
 
   tree_->Branch("L3_mu1_pt",  &L3_mu1_pt);
   tree_->Branch("L3_mu1_eta", &L3_mu1_eta);
@@ -1057,16 +1156,6 @@ void MuMu_demo::beginJob()
   //tree_L3muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
     
   // *************************
- 
-  tree_->Branch("mu1_pt",&mu1_pt);  
-  tree_->Branch("mu2_pt",&mu2_pt);  
-
-  tree_->Branch("mu1_eta",&mu1_eta);
-  tree_->Branch("mu2_eta",&mu2_eta);  
-
-  tree_->Branch("mu1_phi",&mu1_phi);  
-  tree_->Branch("mu2_phi",&mu2_phi);  
-  
   tree_->Branch("mu1C2",&mu1C2);  
   tree_->Branch("mu1NHits",&mu1NHits);
   tree_->Branch("mu1NPHits",&mu1NPHits);
@@ -1133,6 +1222,8 @@ void MuMu_demo::beginJob()
 
   tree_->Branch("mu1soft",&mu1soft);
   tree_->Branch("mu2soft",&mu2soft);
+  tree_->Branch("mu1medium",&mu1medium);
+  tree_->Branch("mu2medium",&mu2medium);
   tree_->Branch("mu1tight",&mu1tight);
   tree_->Branch("mu2tight",&mu2tight);
   tree_->Branch("mu1PF",&mu1PF);
@@ -1145,31 +1236,18 @@ void MuMu_demo::beginJob()
   tree_->Branch("mu2Global",&mu2Global);
 
   // gen
-  if (isMC_ && false) { // FIXME : something not allocated
-     //tree_gen_muons   = fs->make<TTree>("ntuple_gen_muons",  "gen muons ntuple");
-     //tree_gen_muons->Branch("run",      &run,       "run/I");
-     //tree_gen_muons->Branch("event",    &event,     "event/L");
-     //tree_gen_muons->Branch("lumiblock",&lumiblock,"lumiblock/I");
-     //tree_gen_muons->Branch("GENmu_pt", &GENmu_pt);
-     //tree_gen_muons->Branch("GENmu_eta", &GENmu_eta);
-     //tree_gen_muons->Branch("GENmu_phi", &GENmu_phi);
-     //tree_gen_muons->Branch("GENmu_charge", &GENmu_charge);
-     //tree_gen_muons->Branch("GENmu_status", &GENmu_status);
-     //tree_gen_muons->Branch("GENmu_mother", &GENmu_mother);
-     //tree_gen_muons->Branch("GENmu_grandmother", &GENmu_grandmother);
+  if (isMC_) { // FIXME : something not allocated
+    tree_->Branch("mu1_gen_match", &mu1_gen_match);
+    tree_->Branch("mu1_gen_pt",    &mu1_gen_pt);
+    tree_->Branch("mu1_gen_eta",   &mu1_gen_eta);
+    tree_->Branch("mu1_gen_phi",   &mu1_gen_phi);
+    tree_->Branch("mu1_gen_dR",    &mu1_gen_dR);
 
-     tree_->Branch("gen_bc_p4",     "TLorentzVector",  &gen_bc_p4);
-     tree_->Branch("gen_jpsi_p4",   "TLorentzVector",  &gen_jpsi_p4);
-     tree_->Branch("gen_pion3_p4",  "TLorentzVector",  &gen_pion3_p4);
-     tree_->Branch("gen_muon1_p4",  "TLorentzVector",  &gen_muon1_p4);
-     tree_->Branch("gen_muon2_p4",  "TLorentzVector",  &gen_muon2_p4);
-     tree_->Branch("gen_bc_vtx",    "TVector3",        &gen_bc_vtx);
-     tree_->Branch("gen_jpsi_vtx",  "TVector3",        &gen_jpsi_vtx);
-     tree_->Branch("gen_bc_ct",     &gen_bc_ct,        "gen_bc_ct/D");
-
-     tree_->Branch("mu1_GEN_match", &mu1_GEN_match);
-     tree_->Branch("mu2_GEN_match", &mu2_GEN_match);
-
+    tree_->Branch("mu2_gen_match", &mu2_gen_match);
+    tree_->Branch("mu2_gen_pt",    &mu2_gen_pt);
+    tree_->Branch("mu2_gen_eta",   &mu2_gen_eta);
+    tree_->Branch("mu2_gen_phi",   &mu2_gen_phi);
+    tree_->Branch("mu2_gen_dR",    &mu2_gen_dR);
   }
   
   
@@ -1196,7 +1274,7 @@ void MuMu_demo::reset_variables(){
 
   DiMu_dR = 0;
   DiMu_mu1trk2_dR = 0; DiMu_mu2trk1_dR = 0;
-  DiMu_dz = 0; 
+  DiMu_dz = -99; 
   DiMu_mass = 0; DiMu_mass_err = 0;
   DiMu_pt = 0;  DiMu_eta = 0;  DiMu_phi = 0;
   DiMu_mu1_pt = 0;  DiMu_mu1_eta = 0;  DiMu_mu1_phi = 0;
@@ -1250,6 +1328,11 @@ void MuMu_demo::reset_variables(){
   mu1_L3_match = 0;
   mu2_L3_match = 0;
 
+  mu1_gen_match = 0; mu2_gen_match = 0;
+  mu1_gen_pt =-99; mu1_gen_eta =-99; mu1_gen_phi =-99;
+  mu2_gen_pt =-99; mu2_gen_eta =-99; mu2_gen_phi =-99;
+  mu1_gen_dR = -1; mu2_gen_dR = -1;
+
 
   L1_mu1_dR = -1;
   L1_mu2_dR = -1;
@@ -1270,6 +1353,8 @@ void MuMu_demo::reset_variables(){
   offline_matched.clear(); offline_closest.clear();
   L1mu_etaAtVtx.clear(); L1mu_phiAtVtx.clear();
   L1mu_quality.clear(); L1mu_charge.clear();
+
+  genMuons_match_idx.clear();
 
   GENmu_charge.clear(); GENmu_status.clear(); 
   GENmu_mother.clear(); GENmu_grandmother.clear();

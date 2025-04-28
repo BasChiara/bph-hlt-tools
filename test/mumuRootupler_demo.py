@@ -239,10 +239,10 @@ process.rootuple = cms.EDAnalyzer('MuMu_demo',
                         # selection
                         muonTrkPt_min     = cms.double(1.5),
                         mumuMassConstraint = cms.bool(False),       
-                        mumuMasscut        = cms.vdouble(1.0, 5.0),                                  
+                        mumuMasscut        = cms.vdouble(-1.0, 1e3), #1.0, 5.0                                 
                         Trkmass            = cms.double(0.493677),
-                        BarebMasscut       = cms.vdouble(4.2,6.8),
-                        bMasscut           = cms.vdouble(5.0,6.0),
+                        BarebMasscut       = cms.vdouble(-1, 1e3), #4.2,6.8
+                        bMasscut           = cms.vdouble(-1, 1e3), #5.0,6.0
                         
                         debug = cms.bool(options.debug)        
 )

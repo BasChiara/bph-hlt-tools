@@ -127,12 +127,16 @@ public:
   void   L1matching(const edm::Event& iEvent, const bool& L1atVtx = false);
   void   L1matching_fix(const edm::Event& iEvent, const bool& L1atVtx = false);
 
+  // GEN info
+  void   GetGenInfo(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void   GenMuonMatching(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
   // MuMu candidates
   bool buildMuMu(const reco::TransientTrack& ttrack1, const reco::TransientTrack& ttrack2, reco::Vertex& vertex, reco::BeamSpot& vertexBeamSpot);
 
   void fillPsi(const reco::Candidate& genpsi);
   void fillV0(const reco::Candidate& genv0);
-  bool IsTheSame(const pat::GenericParticle& tk, const pat::Muon& mu);
+  bool IsTheSame(const pat::GenericParticle& tk, const pat::Muon& mu, const double& dR_MAX = 0.03);
   bool   isAncestor(const reco::Candidate*, const reco::Candidate*);
   double GetLifetime(TLorentzVector, TVector3, TVector3);
   
@@ -194,7 +198,8 @@ private:
   bool debug_;
   
   
-
+  int muon_PDGid_ = 13;
+  int Jpsi_PDGid_ = 443;
   ParticleMass MUON_MASS_ = 0.10565837;
   float MUON_SIGMA_ = MUON_MASS_*1.e-6;
 
@@ -209,7 +214,7 @@ private:
 
   // ---- muons ----
   int         mu1_charge, mu2_charge;
-  int         mu1_GEN_match, mu2_GEN_match;
+  int         mu1_gen_match, mu2_gen_match;
   int         mu1_L1_match, mu2_L1_match;
   int         mu1_L1_idx, mu2_L1_idx;
   int         mu1_isPropagated, mu2_isPropagated;
@@ -219,6 +224,10 @@ private:
   Double_t    mu1_L1prop_dR, mu2_L1prop_dR;
   int         mu1_L2_match, mu2_L2_match;
   int         mu1_L3_match, mu2_L3_match;
+
+  Double_t    mu1_gen_pt, mu1_gen_eta, mu1_gen_phi;
+  Double_t    mu2_gen_pt, mu2_gen_eta, mu2_gen_phi;
+  Double_t    mu1_gen_dR, mu2_gen_dR;
 
   int DiMu_mu1_index, DiMu_mu2_index;
   float mu1_pt, mu1_eta, mu1_phi;
@@ -250,7 +259,7 @@ private:
   
   Double_t           DiMu_L1_dR, mumuL2_dr, mumuL3_dr;
 
-  bool       mu1soft, mu2soft, mu1tight, mu2tight;  
+  bool       mu1soft, mu2soft, mu1medium, mu2medium, mu1tight, mu2tight;  
   bool       mu1PF, mu2PF, mu1loose, mu2loose;  
   bool       mu1Tracker, mu2Tracker, mu1Global, mu2Global;  
 
@@ -268,6 +277,7 @@ private:
 
   Double_t L1_mu1_pt, L1_mu1_eta, L1_mu1_phi;
   Double_t L1_mu2_pt, L1_mu2_eta, L1_mu2_phi; 
+  Int_t    L1_mu1_quality, L1_mu2_quality;
   Double_t L3_mu1_pt, L3_mu1_eta, L3_mu1_phi;
   Double_t L3_mu2_pt, L3_mu2_eta, L3_mu2_phi;
  
@@ -298,9 +308,12 @@ private:
   ULong64_t event;
   UInt_t lumiblock;
 
+  // GEN info 
   TLorentzVector gen_bc_p4,gen_jpsi_p4,gen_pion3_p4,gen_muon1_p4,gen_muon2_p4;
   TVector3       gen_bc_vtx,gen_jpsi_vtx;
   Double_t       gen_bc_ct;
+  std::vector<size_t> genJpsi_idx;
+  std::vector<int> genMuons_match_idx;
   std::vector<float> GENmu_pt, GENmu_eta, GENmu_phi;
   std::vector<int> GENmu_charge, GENmu_status;
   std::vector<int> GENmu_mother, GENmu_grandmother; 
