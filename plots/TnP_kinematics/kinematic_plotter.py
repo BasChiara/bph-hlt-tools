@@ -21,7 +21,7 @@ bph_ntuples = {
         "(HLT_Mu8_v==1) & (mu1_HLT_Mu8_v ==1)",
     ]),
     "probesel" : '&'. join([
-        #"(mu2_L1_match==1)",
+        "(mu2_L1_match==1)",
         "(mu2_HLT_Mu0_L1DoubleMu_v == 1)",
     ])
 }
@@ -40,7 +40,6 @@ pog_ntuples = {
         "(probe_isDuplicated == 0)",
     ]),
     "probesel" : '&'. join([
-        #"(l1dr<0.7)",
         "(probe_HLT_Mu0_L1DoubleMu_v == 1)",
     ])
 }
@@ -60,14 +59,14 @@ else :
 vars_to_plot = {
     'probe_pt' : {
         'title' : 'probe-#mu p_{T} [GeV]',
-        'bins'  : [0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,40,50],
+        'bins'  : [0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,50], 
         'range' : (0, 30),
         'bph_var': 'DiMu_mu2_pt',
         'pog_var': 'probe_pt'
     },
     'tag_pt': {
         'title': 'tag-#mu p_{T} [GeV]',
-        'bins': [0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,40,50],
+        'bins': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,25,30,50],
         'range': (0, 30),
         'bph_var': 'DiMu_mu1_pt',
         'pog_var': 'tag_pt'
@@ -131,7 +130,7 @@ vars_to_plot = {
     },
     'passProbe_probe_pt': {
         'title': 'pass probe-#mu p_{T} [GeV]',
-        'bins': [0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,40,50],
+        'bins': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,25,30,50],
         'range': (0, 30),
         'bph_var': 'DiMu_mu2_pt',
         'pog_var': 'probe_pt',
@@ -178,7 +177,7 @@ for var, opts in vars_to_plot.items():
     h_ratio.SetMarkerSize(0.8)
     h_ratio.SetMarkerColor(ROOT.kBlack)
     h_ratio.GetYaxis().SetTitle('BPH/POG')
-    h_ratio.GetYaxis().SetRangeUser(0.5, 1.5)
+    h_ratio.GetYaxis().SetRangeUser(0.6, 1.4)
     h_ratio.GetYaxis().SetNdivisions(505)
     h_ratio.GetYaxis().SetTitleSize(0.1)
     h_ratio.GetXaxis().SetTitle(opts['title'])
@@ -232,5 +231,7 @@ for var, opts in vars_to_plot.items():
 
     upper_pad.Clear()
     lower_pad.Clear()
-    c.Clear()
+    c.Close()
     legend.Clear()
+    h_bph.Delete()
+    h_pog.Delete()
