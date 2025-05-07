@@ -14,7 +14,7 @@ from http.client import HTTPException #python3
 #from CRABClient.UserUtilities import config
 
 
-_ProductionTag = '_v3'
+_ProductionTag = '_v4'
 def getOptions():
     """
     Parse and return the arguments provided by the user.

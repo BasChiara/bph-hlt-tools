@@ -1,0 +1,23 @@
+common:
+  globaltag: 140X_dataRun3_v20
+  isMC: False
+
+samples:
+  Run2024C_M0:
+    dataset: /Muon0/Run2024C-PromptReco-v1/MINIAOD
+  Run2024C_M1:
+    dataset: /Muon1/Run2024C-PromptReco-v1/MINIAOD
+  Run2024D_M0:
+    dataset: /Muon0/Run2024D-PromptReco-v1/MINIAOD
+  Run2024D_M1:
+    dataset: /Muon1/Run2024D-PromptReco-v1/MINIAOD
+  Run2024Ev1_M0:
+    dataset: /Muon0/Run2024E-PromptReco-v1/MINIAOD
+  Run2024Ev1_M1:
+    dataset: /Muon1/Run2024E-PromptReco-v1/MINIAOD
+  Run2024Ev2_M0:
+    dataset: /Muon0/Run2024E-PromptReco-v2/MINIAOD
+  Run2024Ev2_M1:
+    dataset: /Muon1/Run2024E-PromptReco-v2/MINIAOD
+  Run2024E_M1:
+    dataset: /Muon1/Run2024E-PromptReco-v1/MINIAOD

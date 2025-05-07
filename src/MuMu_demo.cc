@@ -4,11 +4,11 @@
 // Class:      MuMu_demo
 // 
 
-//=================================================
-// Original author:  Jhovanny Andres Mejia        |
-//         created:  October of 2021              |
-//         <jhovanny.andres.mejia.guisao@cern.ch> | 
-//=================================================
+//=======================================
+// Original author:  Chiara Basile      |
+//         created:  April of 2025      |
+//         <chiara.basile@cern.ch>      | 
+//=======================================
 
 // user include files
 #include "myAnalyzers/bph-hlt-tools/src/MuMu_demo.h"
@@ -100,7 +100,6 @@ MuMu_demo::MuMu_demo(const edm::ParameterSet& iConfig)
   L1mu_pt(0), L1mu_eta(0), L1mu_phi(0), L1mu_etaAtVtx(0), L1mu_phiAtVtx(0), L1mu_charge(0), L1mu_quality(0),
   // my L1 matching
   L1_muons_closest(0), L1_muons_matched(0),
-  mu_pt(0), mu_eta(0), mu_phi(0), mu_charge(0),
   L2mu_pt(0), L2mu_eta(0), L2mu_phi(0),
   L3mu_pt(0), L3mu_eta(0), L3mu_phi(0),
 
@@ -561,13 +560,12 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       mu1dxy_beamspot = glbTrack1->dxy(vertexBeamSpot.position()) ;// 
       mu2dxy_beamspot = glbTrack2->dxy(vertexBeamSpot.position()) ;// 
 
-      mu1dxy_err = glbTrack1->dxyError() ;// 
-      mu2dxy_err = glbTrack2->dxyError() ;// 
-
-      //muon_dca = dca;
+      mu1dxy_err = glbTrack1->dxyError() ; 
+      mu2dxy_err = glbTrack2->dxyError() ;
 
       //fill the tree
-      tree_->Fill();
+      if (tree_) tree_->Fill();
+      else edm::LogError("MuMu_demo") << "tree_ pointer is null!";
 
       //muonParticles.clear();
       //vFitMCParticles.clear();
@@ -587,6 +585,7 @@ void MuMu_demo::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 // save information about HLT
 void MuMu_demo::L1results(const edm::Event& iEvent, const edm::EventSetup& iSetup){
   if(debug_) std::cout<< "---> L1results()" << std::endl;
+  l1sVector.resize( L1Seeds_.size(), 0);
   
   // initialize the L1TGlobalUtil object for parsing the L1 trigger menu
   gtUtil_->retrieveL1(iEvent, iSetup, algInputTag_);
@@ -981,7 +980,6 @@ void MuMu_demo::GenMuonMatching(const edm::Event& iEvent, const edm::EventSetup&
   }
   genMuons_match_idx.resize(offline_muons->size(), -1);
   // loop on gen particles
-  //for (size_t i = 0; i < genJpsi_idx.size(); ++i) {
   for (size_t i = 0; i < genParticles->size(); ++i) {
     const reco::Candidate &gen = (*genParticles)[i];
 
@@ -1004,10 +1002,10 @@ void MuMu_demo::GenMuonMatching(const edm::Event& iEvent, const edm::EventSetup&
 }
 
 bool MuMu_demo::IsTheSame(const pat::GenericParticle& tk, const pat::Muon& mu, const double& dR_MAX){
-  //double DeltaEta = fabs(mu.eta()-tk.eta());
-  //double DeltaP   = fabs(mu.p()-tk.p());
-  return reco::deltaR(mu.eta(), mu.phi(), tk.eta(), tk.phi()) < dR_MAX;
-  //if (DeltaEta < 0.02 && DeltaP < 0.02) return true;
+  bool same_dR = reco::deltaR(mu.eta(), mu.phi(), tk.eta(), tk.phi()) < dR_MAX;
+  bool same_dpT = fabs(mu.pt() - tk.pt())/tk.pt() < 0.5;
+  return same_dR && same_dpT;
+  
 
   //return false;
 }
@@ -1207,19 +1205,6 @@ void MuMu_demo::beginJob()
   //tree_L1muons->Branch("L1mu_charge", &L1mu_charge);
   //tree_L1muons->Branch("L1mu_quality", &L1mu_quality);
 
-  //tree_muons->Branch("mu_pt", &mu_pt); 
-  //tree_muons->Branch("mu_eta", &mu_eta);
-  //tree_muons->Branch("mu_phi", &mu_phi);
-  //tree_muons->Branch("mu_charge", &mu_charge);
-  
-  //tree_L2muons->Branch("L2mu_pt", &L2mu_pt); 
-  //tree_L2muons->Branch("L2mu_eta", &L2mu_eta);
-  //tree_L2muons->Branch("L2mu_phi", &L2mu_phi);
-  
-  //tree_L3muons->Branch("L3mu_pt", &L3mu_pt); 
-  //tree_L3muons->Branch("L3mu_eta", &L3mu_eta);
-  //tree_L3muons->Branch("L3mu_phi", &L3mu_phi);
-
   tree_->Branch("mu1soft",&mu1soft);
   tree_->Branch("mu2soft",&mu2soft);
   tree_->Branch("mu1medium",&mu1medium);
@@ -1268,7 +1253,10 @@ void MuMu_demo::beginJob()
 
 void MuMu_demo::reset_variables(){
   
-  if (debug_) std::cout << " ---> reset_variables()" << std::endl;  
+  if (debug_) std::cout << " ---> reset_variables()" << std::endl;
+  // --- muons --- 
+  mu1_charge = 0, mu2_charge =0;
+  mu1_gen_match = 0, mu2_gen_match = 0;
 
   nMu = 0;
 
@@ -1343,10 +1331,6 @@ void MuMu_demo::reset_variables(){
   dR_muon1_L3 = -1;
   dR_muon2_L3 = -1;
 
-
-  L1mu_pt.clear(); L1mu_eta.clear(); L1mu_phi.clear();
-  L2mu_pt.clear(); L2mu_eta.clear(); L2mu_phi.clear();
-  L3mu_pt.clear(); L3mu_eta.clear(); L3mu_phi.clear();
   GENmu_pt.clear(); GENmu_eta.clear(); GENmu_phi.clear();
 
   L1_muons_matched.clear(); L1_muons_closest.clear();
@@ -1354,21 +1338,17 @@ void MuMu_demo::reset_variables(){
   L1mu_etaAtVtx.clear(); L1mu_phiAtVtx.clear();
   L1mu_quality.clear(); L1mu_charge.clear();
 
+  genJpsi_idx.clear();
   genMuons_match_idx.clear();
 
   GENmu_charge.clear(); GENmu_status.clear(); 
   GENmu_mother.clear(); GENmu_grandmother.clear();
 
-  mu_pt.clear(); mu_eta.clear(); mu_phi.clear();
-  mu_charge.clear();
-
-  for(std::size_t i = 0; i < HLTPaths_.size(); ++i) {
-    hltsVector[i] = 0;
-    mu1_hltsVector[i] = 0;
-    mu2_hltsVector[i] = 0;
-  }
-  for(std::size_t i = 0; i < HLTPathsFired_.size(); ++i)hltsVector_fired[i] = 0;
-  for(std::size_t i = 0; i < L1Seeds_.size(); ++i) l1sVector[i] = 0;
+  l1sVector.clear();
+  hltsVector_fired.clear();
+  hltsVector.clear();
+  mu1_hltsVector.clear();
+  mu2_hltsVector.clear();
 }// reset_variables()
 
 // ------------ method called once each job just after ending the event loop  ------------

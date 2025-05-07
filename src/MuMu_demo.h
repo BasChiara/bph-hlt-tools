@@ -42,7 +42,7 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/PatCandidates/interface/PackedCandidate.h" // muy importante para MiniAOD
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/GenericParticle.h"
@@ -229,7 +229,7 @@ private:
   Double_t    mu2_gen_pt, mu2_gen_eta, mu2_gen_phi;
   Double_t    mu1_gen_dR, mu2_gen_dR;
 
-  int DiMu_mu1_index, DiMu_mu2_index;
+  int   DiMu_mu1_index, DiMu_mu2_index;
   float mu1_pt, mu1_eta, mu1_phi;
   float mu2_pt, mu2_eta, mu2_phi;
   
@@ -250,8 +250,6 @@ private:
   std::vector<std::vector<std::pair<int,double>>> offline_closest;
   std::vector<int> L1_muons_matched, offline_matched;
 
-  
-  std::vector<float> mu_pt, mu_eta, mu_phi, mu_charge;
   std::vector<float> L2mu_pt, L2mu_eta, L2mu_phi;
   std::vector<float> L3mu_pt, L3mu_eta, L3mu_phi;
   std::vector<int>   hltsVector, l1sVector, hltsVector_fired;

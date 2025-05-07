@@ -1,0 +1,9 @@
+common:
+  globaltag: 130X_dataRun3_PromptAnalysis_v1
+  isMC: False
+
+samples:
+  Run2022F_M:
+    dataset: /Muon/Run2022F-22Sep2023-v2/MINIAOD
+  Run2022G_M:
+    dataset: /Muon/Run2022G-22Sep2023-v1/MINIAOD
