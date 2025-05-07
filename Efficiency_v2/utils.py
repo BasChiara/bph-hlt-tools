@@ -31,6 +31,30 @@ def selection_from_json(file):
             
     return tag_selection_, probe_selection_, name
 
+def get_hist_fromFile(file_name, handle = '', category = 'efficiency'):
+    if not os.path.exists(file_name):
+        print(f'Error: {file_name} does not exist')
+        return None
+    f = ROOT.TFile.Open(file_name)
+    if not f:
+        print(f'Error: {file_name} is not a valid root file')
+        return None
+    for e in f.GetListOfKeys():
+        if not 'TH1' in e.GetClassName()  : continue
+        if not category in e.GetName(): continue
+        if not handle in e.GetName(): continue
+        hist_name = e.GetName()
+        print(f'[i] found histogram: {hist_name}')
+        break
+    hist = f.Get(hist_name)
+    hist.SetDirectory(0)
+    f.Close()
+    if not hist:
+        print(f'Error: {hist_name} is not a valid histogram')
+        return None
+    
+    return hist
+
 def generateClopperPearsonInterval(num,den):
     confidenceLevel = 0.68
     alpha = 1 - confidenceLevel
@@ -41,8 +65,6 @@ def generateClopperPearsonInterval(num,den):
     else:
         upperLimit = round(ROOT.Math.beta_quantile(1-alpha/2,num + 1,den-num),4)
     return lowerLimit,upperLimit
-
-
 
 def efficiency_from_histo(h_tag, h_probe,  verbose=False):
     h_tag.Sumw2()
@@ -60,6 +82,8 @@ def efficiency_from_histo(h_tag, h_probe,  verbose=False):
         eff_val[i-1] = n_probe / n_tag if n_tag > 0 else 0
         if n_tag > 0:
             eff_lo, eff_hi = generateClopperPearsonInterval(n_probe, n_tag)
+            eff_hi = np.min([1.0, eff_hi])
+            
             eff_elo[i-1] = eff_val[i-1] - eff_lo
             eff_ehi[i-1] = eff_hi - eff_val[i-1]
         
@@ -109,6 +133,30 @@ def style_efficiency(eff, x_label = '', title = '',color = ROOT.kBlack, marker =
     
 
     return eff
+
+def style_scale_factor(h, x_label = '', y_label = 'Data/MC', yrange = [0.8,1.2], title = '', color = ROOT.kBlack, marker = None):
+
+    h.SetTitle(title)
+    if marker : 
+        h.SetMarkerStyle(marker)
+        h.SetMarkerColor(color)
+        h.SetMarkerSize(1.2)
+    h.SetLineColor(color)
+    h.SetLineWidth(2)
+    # x-axis
+    h.GetXaxis().SetTitle(x_label)
+    h.GetXaxis().SetTitleSize(0.1)
+    #h.GetXaxis().SetTitleOffset(0.9)
+    h.GetXaxis().SetLabelSize(0.1)
+    # y-axis
+    h.GetYaxis().SetTitle(y_label)
+    h.GetYaxis().SetTitleSize(0.1)
+    h.GetYaxis().SetTitleOffset(0.5)
+    h.GetYaxis().SetLabelSize(0.1)
+    h.GetYaxis().SetRangeUser(yrange[0], yrange[1])
+    h.GetYaxis().SetNdivisions(505)
+
+    return h
 
 def style_histogram(h, x_label = '', y_label = '', title = '', color = ROOT.kBlack, marker = None):
 

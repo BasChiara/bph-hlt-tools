@@ -1,6 +1,7 @@
 import ROOT
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gROOT.SetBatch(True)
+ROOT.gStyle.SetOptStat(0)
 
 import argparse
 import json
@@ -82,41 +83,60 @@ if args.splitEta:
     eta_bins['overlap'] = config.eta_overlap
     eta_bins['endcap']  = config.eta_endcap
 
+# variable to "fit"
+ref_var = 'DiMu_mass'
+ref_var_bins = [40, 2.9 , 3.3]
+
 root_file = ROOT.TFile(out_file_name, 'RECREATE')
 # loop over eta bins
 for region, eta_range in eta_bins.items():
-    eta_selection = f'(DiMu_mu2_aeta>{eta_range[0]}) & (DiMu_mu2_aeta<{eta_range[1]})'
+    eta_selection = f'((DiMu_mu2_aeta>{eta_range[0]}) & (DiMu_mu2_aeta<{eta_range[1]}))'
     print(f'[i] eta region: {region} -> {eta_selection}')
-    # loop over variables
+    
+    # loop over probe-variables
     for var in config.variables:
         print(f' - variable: {var}')
         bins = array('d', config.Bins1d[var])
-        # create histogram for the variable
-        h_tag = data_tag.Filter(eta_selection).Histo1D(
-            (f'h_{var}_{region}_tag', config.pretty_name[var], len(bins) -1 , bins),
-            var
-        ).GetValue()
-        h_tag.SetDirectory(0)
-        h_tag.Sumw2()
+        h_eff = ROOT.TH1F(f'h_{var}_{region}_efficiency', f'{config.pretty_name[var]} efficiency', len(bins)-1, bins)
 
-        h_probe = data_tag.Filter(probe_selection_+'&'+eta_selection).Histo1D(
-            (f'h_{var}_{region}_probe', config.pretty_name[var], len(bins) -1 , bins),
-            var
-        ).GetValue()
-        h_probe.SetDirectory(0)
-        h_probe.Sumw2()
-        
-        g_eff, h_eff = utils.efficiency_from_histo(h_tag, h_probe, args.verbose)
-        g_eff = utils.style_efficiency(g_eff, x_label=config.pretty_name[var])
-        h_eff = utils.style_efficiency(h_eff, x_label=config.pretty_name[var])
-        g_eff.SetName(f'Graph_{var}_{region}_efficiency' + ('MC' if data_info['isMC'] else 'Data'))
-        h_eff.SetName(f'Hist_{var}_{region}_efficiency' + ('MC' if data_info['isMC'] else 'Data'))
-        
+        for i in range(len(bins)-1):
+            print(f'   bin {i}: {bins[i]} - {bins[i+1]}')
+            bin_selection = f'(({var}>={bins[i]}) & ({var}<{bins[i+1]}))'
 
-        root_file.cd()
-        h_tag.Write()
-        h_probe.Write()
-        g_eff.Write()
+            # pass+fail and pass distribution in the reference variable
+            h_tag = data_tag.Filter(eta_selection).Filter(bin_selection).Histo1D(
+                (f'h_{ref_var}_{region}_tag_{i}', config.pretty_name[ref_var], ref_var_bins[0], ref_var_bins[1], ref_var_bins[2]),
+                ref_var
+            ).GetValue()
+            h_tag.SetDirectory(0)
+            h_probe = data_tag.Filter(probe_selection_+'&'+eta_selection).Filter(bin_selection).Histo1D(
+                (f'h_{ref_var}_{region}_probe_{i}', config.pretty_name[ref_var], ref_var_bins[0], ref_var_bins[1], ref_var_bins[2]),
+                ref_var
+            ).GetValue()
+
+            Npassfail = h_tag.GetEntries()
+            Npass = h_probe.GetEntries()
+            eff = Npass/Npassfail if Npassfail > 0 else 0
+            if Npassfail > 0:
+                eff_lo, eff_hi = utils.generateClopperPearsonInterval(Npass, Npassfail)
+                eff_elo = eff - eff_lo
+                eff_ehi = eff_hi - eff
+            else:
+                eff_ehi = 0
+                eff_elo = 0
+            print(f'   N(pass): {Npass} N(pass+fail): {Npassfail}')
+            h_eff.SetBinContent(i+1, eff)
+            h_eff.SetBinError(i+1, (eff_elo + eff_ehi)/2.0)
+
+            root_file.cd()
+            h_tag.Write()
+            h_probe.Write()
+
+            h_tag.Delete()
+            h_probe.Delete()
+        
+        print(f'[o] save histogram {h_eff.GetName()}')
+        h_eff = utils.style_efficiency(h_eff, x_label=config.pretty_name[var])      
         h_eff.Write()
 
 root_file.Close()

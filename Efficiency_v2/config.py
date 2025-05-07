@@ -1,12 +1,24 @@
 # configuration for default effieciency selection
 import numpy as np
 
-eta_barrel = [0, 0.9]
+eta_barrel  = [0.0, 0.9]
 eta_overlap = [0.9, 1.2]
-eta_endcap = [1.2, 2.4]
-
+eta_endcap  = [1.2, 2.4]
+eta_bins = {
+    'cms' : [eta_barrel[0], eta_endcap[1]],
+    'barrel'  : eta_barrel,
+    'overlap' : eta_overlap,
+    'endcap'  : eta_endcap,
+}
+deltaR_bins = {
+    'dRincl'  : [0.0, 1.2],
+    'dR_1'  : [0.00, 0.45],
+    'dR_2'  : [0.45, 1.20],
+    #'dR_3'  : [0.60, 1.20],
+}
+# default binning
 Bins1d = dict(
-    DiMu_mu2_pt  = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30,50],#[0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,50],
+    DiMu_mu2_pt  = [0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,50], #[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30,50],
     DiMu_mu2_eta = [-2.4, -1.2, -0.9, 0.9, 1.2, 2.4],#np.linspace(-2.4, 2.4, 11),
     DiMu_mu1_eta = np.linspace(-2.4, 2.4, 24),
     DiMu_mass   = [2.9,2.95, 3, 3.05, 3.1, 3.15 ,3.2, 3.25, 3.3],
@@ -17,6 +29,9 @@ Bins1d = dict(
     L1_mu2_dR   = np.linspace(0, 1.0, 40),
     L1vtx_mu2_dR= np.linspace(0, 0.4, 60),
     lxySig      = [0, 0.5, 1, 1.5, 2, 2.5, 3,  3.5, 4, 4.5, 5, 5.5]
+)
+Bins1d_tight = dict(
+    DiMu_mu2_pt = [0,4,5,6,50] 
 )
 pretty_name=dict(
     DiMu_mu2_pt = "probe #mu p_{T} (GeV)",

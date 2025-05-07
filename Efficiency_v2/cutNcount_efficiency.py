@@ -1,6 +1,7 @@
 import ROOT
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gROOT.SetBatch(True)
+ROOT.gStyle.SetOptStat(0)
 
 import argparse
 import json
@@ -21,7 +22,11 @@ argparser.add_argument('--selection',
                         )
 argparser.add_argument('--splitEta',
                         action='store_true',
-                        help='split by barrel/overlap/endcap eta regions in the selection',
+                        help='split by barrel/overlap/endcap eta regions for the probe muon',
+                        )
+argparser.add_argument('--splitDR',
+                        action='store_true',
+                        help='split by deltaR between tag and probe muon',
                         )
 argparser.add_argument('--output',
                         help='output directory',
@@ -76,48 +81,75 @@ data_tag = ROOT.RDataFrame(data_info["tree"], data_files).Filter(tag_selection_)
 print(f'[i] #events after TAG selection: {data_tag.Count().GetValue()}')
 
 # set eta bins
-eta_bins = {'cms' : [0, 2.5]}
+eta_bins = {'cms' : [0, 2.4]}
 if args.splitEta:
-    eta_bins['barrel']  =config.eta_barrel
+    eta_bins['barrel']  = config.eta_barrel
     eta_bins['overlap'] = config.eta_overlap
     eta_bins['endcap']  = config.eta_endcap
+# set deltaR bins
+deltaR_bins = {'dRincl' : [0, 1.2]}
+if args.splitDR:
+    deltaR_bins = config.deltaR_bins
+
+# variable to "fit"
+ref_var = 'DiMu_mass'
+ref_var_bins = [40, 2.9 , 3.3]
 
 root_file = ROOT.TFile(out_file_name, 'RECREATE')
+print('\n')
 # loop over eta bins
 for region, eta_range in eta_bins.items():
-    eta_selection = f'(DiMu_mu2_aeta>{eta_range[0]}) & (DiMu_mu2_aeta<{eta_range[1]})'
-    print(f'[i] eta region: {region} -> {eta_selection}')
-    # loop over variables
-    for var in config.variables:
-        print(f' - variable: {var}')
-        bins = array('d', config.Bins1d[var])
-        # create histogram for the variable
-        h_tag = data_tag.Filter(eta_selection).Histo1D(
-            (f'h_{var}_{region}_tag', config.pretty_name[var], len(bins) -1 , bins),
-            var
-        ).GetValue()
-        h_tag.SetDirectory(0)
-        h_tag.Sumw2()
+    eta_selection = f'((DiMu_mu2_aeta>{eta_range[0]}) & (DiMu_mu2_aeta<{eta_range[1]}))'
+    print(f'- eta region: {region} -> {eta_selection}')
 
-        h_probe = data_tag.Filter(probe_selection_+'&'+eta_selection).Histo1D(
-            (f'h_{var}_{region}_probe', config.pretty_name[var], len(bins) -1 , bins),
-            var
-        ).GetValue()
-        h_probe.SetDirectory(0)
-        h_probe.Sumw2()
-        
-        g_eff, h_eff = utils.efficiency_from_histo(h_tag, h_probe, args.verbose)
-        g_eff = utils.style_efficiency(g_eff, x_label=config.pretty_name[var])
-        h_eff = utils.style_efficiency(h_eff, x_label=config.pretty_name[var])
-        g_eff.SetName(f'Graph_{var}_{region}_efficiency' + ('MC' if data_info['isMC'] else 'Data'))
-        h_eff.SetName(f'Hist_{var}_{region}_efficiency' + ('MC' if data_info['isMC'] else 'Data'))
-        
+    for dR, dR_range in deltaR_bins.items():
+        dR_selection = f'((DiMu_dR>{dR_range[0]}) & (DiMu_dR<{dR_range[1]}))'
+        print(f'-- deltaR region: {dR} -> {dR_selection}')
 
-        root_file.cd()
-        h_tag.Write()
-        h_probe.Write()
-        g_eff.Write()
-        h_eff.Write()
+        data_sel = data_tag.Filter(eta_selection).Filter(dR_selection)
+        print(f'[i] #events after phase space selection: {data_sel.Count().GetValue()}')
+        if (data_sel.Count().GetValue() == 0):
+            print(f'[i] no events in this selection, skipping')
+            continue
+
+        # loop over probe-variables
+        for var in config.variables:
+            print(f'--- variable: {var}')
+            bins = array('d', config.Bins1d[var]) if dR_range[0] < 0.4 else array('d', config.Bins1d_tight[var])
+
+            this_name = f'{var}_{region}_{dR}'
+
+            h_eff = ROOT.TH1F(f'h_{this_name}_efficiency', f'{config.pretty_name[var]} efficiency', len(bins)-1, bins)
+            
+            # create histogram for the variable
+            h_tag = data_sel.Histo1D(
+                (f'h_{this_name}_tag', config.pretty_name[var], len(bins) -1 , bins),
+                var
+            ).GetValue()
+            h_tag.SetDirectory(0)
+            h_tag.Sumw2()
+
+            h_probe = data_sel.Filter(probe_selection_).Histo1D(
+                (f'h_{this_name}_probe', config.pretty_name[var], len(bins) -1 , bins),
+                var
+            ).GetValue()
+            h_probe.SetDirectory(0)
+            h_probe.Sumw2()
+            
+            g_eff, h_eff = utils.efficiency_from_histo(h_tag, h_probe, args.verbose)
+            g_eff        = utils.style_efficiency(g_eff, x_label=config.pretty_name[var])
+            h_eff        = utils.style_efficiency(h_eff, x_label=config.pretty_name[var])
+            g_eff.SetName(f'Graph_{this_name}_efficiency' + ('MC' if data_info['isMC'] else 'Data'))
+            h_eff.SetName(f'Hist_{this_name}_efficiency' + ('MC' if data_info['isMC'] else 'Data'))
+            
+
+            root_file.cd()
+            h_tag.Write()
+            h_probe.Write()
+            g_eff.Write()
+            h_eff.Write()
+    
+    print('\n')
 
 root_file.Close()
 print(f'[i] output file closed: {out_file_name}')
