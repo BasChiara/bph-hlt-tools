@@ -2,6 +2,10 @@ import ROOT
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gROOT.SetBatch(True)
 ROOT.gStyle.SetOptStat(0)
+
+import array as array
+import json
+
 import os
 import utils as utils
 import config as config
@@ -46,11 +50,21 @@ probe_var = args.probe_var
 eta_region_list = [args.eta_region]
 if eta_region_list[0] == 'all':
   eta_region_list = ['cms', 'barrel', 'overlap', 'endcap']
+eta_plot_bins = array.array('d', [config.eta_bins[region][0] for region in eta_region_list] + [config.eta_bins[region][1] for region in eta_region_list])
 
 deltaR_region_list = ['dRincl'] if not args.splitDR else config.deltaR_bins.keys()
+deltaR_plot_bins = array.array('d', [config.deltaR_bins[region][0] for region in deltaR_region_list] + [config.deltaR_bins[region][1] for region in deltaR_region_list])
+
+# summary json
+summary_json = {}
+
 
 for eta_region in eta_region_list:
+  summary_json[eta_region] = {
+     'eta_bin' : config.eta_bins[eta_region],
+  }
   for deltaR_region in deltaR_region_list:
+    
     print(f'\n --- {probe_var} in {eta_region} with {deltaR_region}')
     search_handle = f'{probe_var}_{eta_region}_{deltaR_region}'
    
@@ -73,7 +87,6 @@ for eta_region in eta_region_list:
         print(f'[i] created output directory {args.output}')
     out_file_base = f'{args.output}/scale_factors_{args.trigger}_{search_handle}'
 
-      
     # calculate scale factors
     h_sf = eff_data.Clone('Hist')
     h_sf.SetDirectory(0)
@@ -147,5 +160,23 @@ for eta_region in eta_region_list:
     c.Write()
     c.Close()
 
+    # save summary json
+    summary_json[eta_region][deltaR_region] = {
+       'dR_bin' : config.deltaR_bins[deltaR_region],
+    }
+    summary_json[eta_region][deltaR_region][f'{probe_var}_bins'] = [eff_data.GetXaxis().GetBinLowEdge(i) for i in range(1, eff_data.GetNbinsX() + 2)]
+    summary_json[eta_region][deltaR_region]['eff_MC'] = [eff_mc.GetBinContent(i) for i in range(1, eff_mc.GetNbinsX() + 1)]
+    summary_json[eta_region][deltaR_region]['eff_MC_err'] = [eff_mc.GetBinError(i) for i in range(1, eff_mc.GetNbinsX() + 1)]
+    summary_json[eta_region][deltaR_region]['eff_data'] = [eff_data.GetBinContent(i) for i in range(1, eff_data.GetNbinsX() + 1)]
+    summary_json[eta_region][deltaR_region]['eff_data_err'] = [eff_data.GetBinError(i) for i in range(1, eff_data.GetNbinsX() + 1)]
+    summary_json[eta_region][deltaR_region]['sf'] = [h_sf.GetBinContent(i) for i in range(1, h_sf.GetNbinsX() + 1)]
+    summary_json[eta_region][deltaR_region]['sf_err'] = [h_sf.GetBinError(i) for i in range(1, h_sf.GetNbinsX() + 1)]
+
 f_out.Close()
 
+# save summary json
+summary_json_file = os.path.join(args.output, f'efficiency_{args.trigger}_summary.json')
+with open(summary_json_file, 'w') as f:
+    json.dump(summary_json, f, indent=4)
+print(f'[i] saved summary json to {summary_json_file}')
+f.close()

@@ -66,6 +66,20 @@ def generateClopperPearsonInterval(num,den):
         upperLimit = round(ROOT.Math.beta_quantile(1-alpha/2,num + 1,den-num),4)
     return lowerLimit,upperLimit
 
+def calc_efficiency_err(num, den):
+    if den == 0:
+        return 0.0, 0.0, 0.0
+    eff = num / den
+    
+    eff_lo, eff_hi = generateClopperPearsonInterval(num, den)
+    eff_lo = np.max([0.0, eff_lo])
+    eff_hi = np.min([1.0, eff_hi])
+    
+    eff_err_lo = eff - eff_lo
+    eff_err_hi = eff_hi - eff
+
+    return eff, eff_err_lo, eff_err_hi
+
 def efficiency_from_histo(h_tag, h_probe,  verbose=False):
     h_tag.Sumw2()
     h_probe.Sumw2()
@@ -79,13 +93,18 @@ def efficiency_from_histo(h_tag, h_probe,  verbose=False):
         # efficiency
         n_tag = h_tag.GetBinContent(i)
         n_probe = h_probe.GetBinContent(i)
-        eff_val[i-1] = n_probe / n_tag if n_tag > 0 else 0
-        if n_tag > 0:
-            eff_lo, eff_hi = generateClopperPearsonInterval(n_probe, n_tag)
-            eff_hi = np.min([1.0, eff_hi])
-            
-            eff_elo[i-1] = eff_val[i-1] - eff_lo
-            eff_ehi[i-1] = eff_hi - eff_val[i-1]
+
+        this_eff, this_eff_err_lo, this_eff_err_hi = calc_efficiency_err(n_probe, n_tag)
+        eff_val[i-1] = this_eff
+        eff_elo[i-1] = this_eff_err_lo
+        eff_ehi[i-1] = this_eff_err_hi
+
+        #if n_tag > 0:
+        #    eff_lo, eff_hi = generateClopperPearsonInterval(n_probe, n_tag)
+        #    eff_hi = np.min([1.0, eff_hi])
+        #    
+        #    eff_elo[i-1] = eff_val[i-1] - eff_lo
+        #    eff_ehi[i-1] = eff_hi - eff_val[i-1]
         
         if (verbose) :print(f'bin {i} x = {x_val[i-1]} : {n_probe} / {n_tag} \t eff = {eff_val[i-1]:.2f} +{eff_ehi[i-1]:.2f} -{eff_elo[i-1]:.2f}')
 
@@ -179,3 +198,4 @@ def style_histogram(h, x_label = '', y_label = '', title = '', color = ROOT.kBla
     h.GetYaxis().SetLabelSize(0.04)
 
     return h
+

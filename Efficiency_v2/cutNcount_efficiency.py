@@ -115,7 +115,7 @@ for region, eta_range in eta_bins.items():
         # loop over probe-variables
         for var in config.variables:
             print(f'--- variable: {var}')
-            bins = array('d', config.Bins1d[var]) if dR_range[0] < 0.4 else array('d', config.Bins1d_tight[var])
+            bins = array('d', config.Bins1d[var]) if dR == 'dRincl' else array('d', config.Bins1d_tight[var])
 
             this_name = f'{var}_{region}_{dR}'
 
